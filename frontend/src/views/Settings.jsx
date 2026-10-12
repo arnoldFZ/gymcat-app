@@ -13,6 +13,7 @@ import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
 import { plansSheet, confirmSheet, importFromApp } from '../sheets.jsx'
 import { rewardsSheet, rulesSheet, ledgerSheet } from '../gamification.jsx'
 import { rulesOf } from '../lib/gamification/index.js'
+import { isSpeechSupported } from '../lib/speech.js'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
 
@@ -124,6 +125,9 @@ export default function Settings() {
         accessory="chevron" onClick={rulesSheet} />
       <Row icon="medal" iconTint="var(--purple)" title={t('Rewards catalog')} accessory="chevron" onClick={rewardsSheet} />
       <Row icon="history" iconTint="var(--blue)" title={t('Points history')} subtitle={t('Every movement, auditable.')} accessory="chevron" onClick={ledgerSheet} />
+      <Row icon="bell" iconTint="var(--orange)" title={t('Weekly nudge')} subtitle={t('Remind me when one session is left to hit the goal.')}>
+        <Switch checked={S.gamNudge !== false} onChange={v => update(s => { s.gamNudge = v })} />
+      </Row>
     </Section>
 
     {/* ---------- during a workout ---------- */}
@@ -148,6 +152,11 @@ export default function Settings() {
         <Segmented className="seg-inline"
           options={[{ value: 'none', label: t('Off') }, { value: 'rir', label: t('RIR') }, { value: 'rpe', label: t('RPE') }]}
           value={effortOf(S)} onChange={v => update(s => { s.effort = v; delete s.showRir })} />
+      </Row>
+      <Row icon="speaker" iconTint="var(--blue)" title={t('Exercise voice')} subtitle={isSpeechSupported() ? t('Read instructions aloud.') : t('Not supported in this browser.')}>
+        <Segmented className="seg-inline"
+          options={[{ value: 'off', label: t('Off') }, { value: 'app', label: t('Auto') }, { value: 'en', label: 'EN' }, { value: 'es', label: 'ES' }]}
+          value={S.speakLang || 'app'} onChange={v => update(s => { s.speakLang = v })} />
       </Row>
     </Section>
 

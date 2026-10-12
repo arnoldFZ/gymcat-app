@@ -6,6 +6,7 @@ import { fmtDate, fmtNum, fmtVol, fmtDur, durPart, todayISO, uid, exCount, DAYN,
 import { lastEntryFor, bestWeightFor, buildSets, effectiveRoutineId, workoutVolume, setsDone, setsDoneActive, lastBW, supersetUnits, unitOf, setLabel, defaultConfig, cleanupSg, modeOf, effortOf, isBw, isPerSide, sideReps } from './lib/history.js'
 import { beep, vibrate } from './lib/sound.js'
 import { t, instrFor, getLang, INSTR_LANGS } from './lib/i18n.js'
+import { speak, stopSpeaking, speechText, speechLangs, isSpeechSupported } from './lib/speech.js'
 import { nav } from './lib/nav.js'
 import { starterRoutines } from './lib/starter.js'
 import { PLAN_TEMPLATES, buildTemplate } from './lib/plans.js'
@@ -21,13 +22,20 @@ import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-sha
 import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
-import { ledgerAfterFinish, ledgerAfterDelete, ledgerAfterCorrect, isValidSession } from './lib/gamification/index.js'
+import { ledgerAfterFinish, ledgerAfterDelete, ledgerAfterCorrect, isValidSession, dashboardStats } from './lib/gamification/index.js'
+import { notifyNow } from './lib/notify.js'
 
 const S = () => useStore.getState().S
 const update = (...a) => useStore.getState().update(...a)
 const ui = () => useUI.getState()
 const toast = m => ui().toast(m)
 const snd = () => S().sound
+
+// GYMPACT: read an exercise (name + steps) aloud in the chosen voice language.
+export function speakExercise(ex) {
+  const { tag } = speechLangs(S())
+  if (!speak(speechText(ex.n, instrFor(ex)), tag)) toast(t('Spoken voice is not available on this device'))
+}
 
 /* ============================ custom confirm dialog ============================ */
 function ConfirmDialog({ title, message, confirmText, cancelText, danger, onConfirm, close }) {
@@ -324,6 +332,9 @@ function ExerciseDetail({ ex, close }) {
   const st = useStore(s => s.S)
   const last = lastEntryFor(st, ex.id)
   const best = bestWeightFor(st, ex.id)
+  const steps = instrFor(ex)
+  // Stop any speech when the sheet closes (button, swipe or backdrop).
+  useEffect(() => () => stopSpeaking(), [])
   return <>
     <h3 className="capitalize">{ex.n}</h3>
     <Media ex={ex} />
@@ -341,7 +352,15 @@ function ExerciseDetail({ ex, close }) {
       <Button variant="danger" icon="trash" style={{ flex: 1 }} onClick={() => deleteCustomEx(ex, close)}>{t('Delete')}</Button>
     </div>}
     {!isCardio(ex) && <OneRM ex={ex} />}
-    {instrFor(ex).length > 0 &&<><h4 className="sec">{t('How to')}{!INSTR_LANGS.includes(getLang()) && <span className="dim" style={{ textTransform: 'none', letterSpacing: 0 }}> · {t('instructions in English')}</span>}</h4><ol className="steps-list">{instrFor(ex).map((s, i) => <li key={i}>{s}</li>)}</ol></>}
+    {steps.length > 0 && <>
+      <div className="row between" style={{ marginTop: 18, marginBottom: 6 }}>
+        <h4 className="sec" style={{ margin: 0 }}>{t('How to')}{!INSTR_LANGS.includes(getLang()) && <span className="dim" style={{ textTransform: 'none', letterSpacing: 0 }}> · {t('instructions in English')}</span>}</h4>
+        {isSpeechSupported() && st.speakLang !== 'off' && (
+          <button className="iconbtn" aria-label={t('Listen')} title={t('Listen')} onClick={() => speakExercise(ex)}><Icon name="speaker" /></button>
+        )}
+      </div>
+      <ol className="steps-list">{steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
+    </>}
   </>
 }
 export const exerciseDetailSheet = ex => ui().openSheet(close => <ExerciseDetail ex={ex} close={close} />)
@@ -1053,5 +1072,12 @@ function doFinishWorkout() {
   })
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)
+  // GYMPACT: nudge when finishing this session leaves exactly one to the weekly goal.
+  const fresh = S()
+  if (fresh.gamNudge !== false && dashboardStats(fresh).remainingToGoal === 1) {
+    const msg = t('One session left to hit this week’s goal 💪')
+    toast(msg)
+    notifyNow('GYMPACT', msg, 'week-nudge')
+  }
   ui().openSheet(close => <FinishSummary w={w} prs={prs} e1prs={e1prs} close={close} />, { kind: 'center', locked: true })
 }

@@ -82,6 +82,9 @@ Catálogo personal en `S.gam.rewards`: `{ id, name, desc, cost, active }`.
 - Si el catálogo está vacío, un botón **opcional** *Añadir recompensas de ejemplo*
   propone tres (café, día de descanso, equipamiento), editables o borrables: no se
   impone ningún premio personal.
+- **Exportar / Importar** el catálogo a un archivo (`gymcat-rewards-*.json`); al
+  importar se **fusiona** (no sobrescribe) y se omiten las recompensas con el mismo
+  nombre. El backup completo (Ajustes) sigue incluyendo el catálogo y el ledger.
 
 ## Dashboard y analítica
 
@@ -91,8 +94,11 @@ Catálogo personal en `S.gam.rewards`: `{ id, name, desc, cost, active }`.
   +300`), **resumen de la última sesión**, recompensa próxima y botón
   iniciar/continuar. Los estados vacíos distinguen "sin datos" de "cero".
 - **Stats** (`views/Stats.jsx`): tarjeta *Constancy* con puntos, racha,
-  % de semanas cumplidas, sesiones por semana (últimas 8) y acceso a
-  *Rewards & history* y *Points history*.
+  % de semanas cumplidas, sesiones por semana (últimas 8), **gráfica de puntos por
+  semana** (12 semanas) y acceso a *Rewards & history* y *Points history*.
+- **Aviso semanal** (opt-in, Ajustes): al finalizar una sesión, si queda **1** para
+  cumplir la meta, avisa con un *toast* y, si hay permiso de notificaciones, con una
+  **notificación local** (service worker). No requiere backend.
 
 ## Registro auditable (Points history)
 
@@ -114,6 +120,17 @@ las rutinas y se fija el horario semanal (las rutinas existentes se conservan). 
 nombres se traducen al idioma actual en el momento de cargar. Un test valida que
 todos los ids de ejercicio existan en el catálogo y no sean cardio, y que existan
 planes de 2 a 6 días.
+
+## Voz hablada (instrucciones)
+
+Cada ejercicio se puede **escuchar**: un botón con altavoz en el detalle del ejercicio
+(y en la cabecera del ejercicio durante el entrenamiento) lee el nombre y los pasos
+con la **voz del sistema** vía Web Speech API — sin audios que descargar ni
+dependencias. El idioma de la voz es **inglés o español**: sigue el idioma de la app,
+o se fuerza en Ajustes → *Voz de los ejercicios* (`Auto` / `EN` / `ES` / `Off`). Lee
+las instrucciones localizadas cuando están disponibles (español), con el nombre del
+ejercicio tal cual (los nombres del catálogo son en inglés). En iOS Safari la voz
+requiere el gesto del toque, así que solo habla cuando pulsas el botón.
 
 ## Backups y compatibilidad
 

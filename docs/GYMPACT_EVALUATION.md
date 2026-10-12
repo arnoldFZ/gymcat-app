@@ -48,6 +48,11 @@ pesos, descansos, historial, PWA y passkeys ya existían y no se reescribieron.
   con reset a valores por defecto.
 - **Historial de puntos** auditable (cada movimiento + desglose por tipo).
 - Dashboard con **progreso de ciclo** y **resumen de la última sesión**.
+- **Voz hablada** por ejercicio (Web Speech API, EN/ES) en el detalle y durante el
+  entrenamiento, con ajuste Auto/EN/ES/Off.
+- **Aviso semanal** (toast + notificación local) cuando falta 1 sesión para la meta.
+- **Export/import del catálogo de recompensas** (fusión por nombre) y **gráfica de
+  puntos por semana**.
 - **Idiomas principales: inglés y español**, ambos **100% completos** (claves nuevas
   y cadenas preexistentes de demo/self-host). El resto de idiomas siguen
   disponibles y caen a inglés en lo no traducido.

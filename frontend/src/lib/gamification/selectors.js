@@ -75,7 +75,7 @@ export function recentWeeks(S, n = 8, now) {
   const out = []
   for (let i = 0; i < n; i++) {
     const count = countInWeek(S && S.workouts, k, tz)
-    out.unshift({ weekKey: k, count, fulfilled: count >= rules.weeklyTarget })
+    out.unshift({ weekKey: k, count, fulfilled: count >= rules.weeklyTarget, points: pointsEarnedInWeek(S && S.gam && S.gam.ledger, k, tz) })
     k = shiftWeekKey(k, -1)
   }
   return out

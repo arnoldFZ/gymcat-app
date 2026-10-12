@@ -701,4 +701,21 @@ export default {
   '{0} spent': '{0} gastados',
   '{0}-week cycle complete · +{1} points': 'Ciclo de {0} semanas completado · +{1} puntos',
   '{0}/{1} weeks towards +{2}': '{0}/{1} semanas hacia +{2}',
+
+  // GYMPACT — voz hablada, nudge semanal, export/import de recompensas, puntos/semana
+  'Auto': 'Auto',
+  'Exercise voice': 'Voz de los ejercicios',
+  'Export': 'Exportar',
+  'Export failed': 'La exportación falló',
+  'Listen': 'Escuchar',
+  'One session left to hit this week’s goal 💪': 'Te falta 1 sesión para cumplir la meta de esta semana 💪',
+  'Points per week': 'Puntos por semana',
+  'Read instructions aloud.': 'Leer las instrucciones en voz alta.',
+  'Remind me when one session is left to hit the goal.': 'Avisarme cuando falte una sesión para cumplir la meta.',
+  'Rewards exported': 'Recompensas exportadas',
+  'Spoken voice is not available on this device': 'La voz no está disponible en este dispositivo',
+  'Weekly nudge': 'Aviso semanal',
+  'not a GymCat rewards file': 'no es un archivo de recompensas de GymCat',
+  'pts': 'pts',
+  '{0} rewards imported': '{0} recompensas importadas',
 }

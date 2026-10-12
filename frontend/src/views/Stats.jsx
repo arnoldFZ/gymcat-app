@@ -17,7 +17,7 @@ import {
   effortHistogram, isHardSet, HARD_RIR
 } from '../lib/effort.js'
 import { Button, Segmented, SelectRow } from '../components/ui.jsx'
-import { dashboardStats, recentWeeks, complianceRate } from '../lib/gamification/index.js'
+import { dashboardStats, recentWeeks, complianceRate, weekStartISO } from '../lib/gamification/index.js'
 import { rewardsSheet, ledgerSheet } from '../gamification.jsx'
 
 // Which muscles the training in a window actually hit — and, the point of the card,
@@ -200,6 +200,10 @@ export default function Stats() {
   const gamWeeks = recentWeeks(S, 8)
   const comp = complianceRate(S, 8)
   const gamMax = Math.max(gam.target, ...gamWeeks.map(w => w.count), 1)
+  const pointsPts = recentWeeks(S, 12).map(w => {
+    const d = weekStartISO(w.weekKey)
+    return { t: Date.parse(d + 'T12:00:00'), y: w.points, d }
+  })
 
   return <>
     <div className="hdr"><div><h1>{t('Stats')}</h1><div className="sub">{t('Progress & history')}</div></div>
@@ -229,6 +233,8 @@ export default function Stats() {
           </div>
         ))}
         <div className="small dim" style={{ marginTop: 8 }}>{t('A week counts only when it reaches {0} valid sessions.', gam.target)}</div>
+        <h4 className="sec" style={{ margin: '16px 0 6px' }}>{t('Points per week')}</h4>
+        <div className="chart"><LineChart points={pointsPts} h={120} unit={t('pts')} /></div>
         <div style={{ height: 12 }} />
         <div className="row" style={{ gap: 8 }}>
           <Button icon="medal" onClick={rewardsSheet}>{t('Rewards & history')}</Button>

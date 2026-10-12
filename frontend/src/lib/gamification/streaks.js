@@ -21,6 +21,12 @@ function mondayOfISOWeek(y, w) {
   return mon
 }
 
+// Monday (as an ISO date) of an ISO week key — for charting a week on a time axis.
+export function weekStartISO(weekKey) {
+  const [y, w] = weekKey.split('-W').map(Number)
+  return mondayOfISOWeek(y, w).toISOString().slice(0, 10)
+}
+
 // Move a week key by `delta` weeks (negative = backwards), staying on ISO weeks.
 export function shiftWeekKey(weekKey, delta) {
   const [y, w] = weekKey.split('-W').map(Number)

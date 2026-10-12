@@ -22,7 +22,11 @@ export const DEF = {
   // that a profile which never chose (loaded state is overlaid on DEF, on every path: local,
   // server pull, backup import) still falls back to the `showRir` boolean this replaced and
   // keeps the column it had. See effortOf.
-  reminder: { on: false, time: '08:00', tz: null }, effort: null
+  reminder: { on: false, time: '08:00', tz: null }, effort: null,
+  // GYMPACT spoken instructions: 'app' follows the UI language, or force 'en'/'es'.
+  speakLang: 'app',
+  // Nudge (toast + system notification) when one session is left to hit the week.
+  gamNudge: true
 }
 const clone = o => JSON.parse(JSON.stringify(o))
 

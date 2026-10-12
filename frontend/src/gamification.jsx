@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { t } from './lib/i18n.js'
 import { fmtDate, uid } from './lib/format.js'
+import { MOBILE, shareExport } from './lib/mobile.js'
 import Icon from './components/Icon.jsx'
 import { Button, Switch, TextField, NumberField, SelectRow } from './components/ui.jsx'
 import { confirmSheet } from './sheets.jsx'
@@ -31,6 +32,7 @@ export const rewardsSheet = () => ui().openSheet(close => <RewardsSheet close={c
 
 function RewardsSheet({ close }) {
   const S = useStore(s => s.S)
+  const fileRef = useRef(null)
   const bal = balance(S.gam && S.gam.ledger)
   const rewards = rewardsCatalog(S)
   const history = redemptionHistory(S).slice().reverse()
@@ -68,6 +70,13 @@ function RewardsSheet({ close }) {
 
     <div style={{ height: 12 }} />
     <Button variant="primary" icon="plus" onClick={() => rewardEditSheet(null)}>{t('Add reward')}</Button>
+    <div style={{ height: 8 }} />
+    <div className="row" style={{ gap: 8 }}>
+      <Button icon="download" style={{ flex: 1 }} onClick={() => exportRewards(rewards)}>{t('Export')}</Button>
+      <Button icon="upload" style={{ flex: 1 }} onClick={() => fileRef.current?.click()}>{t('Import')}</Button>
+    </div>
+    <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: 'none' }}
+      onChange={e => { const f = e.target.files[0]; e.target.value = ''; if (f) importRewardsFile(f) }} />
 
     {history.length > 0 && <>
       <h4 className="sec" style={{ marginTop: 18 }}>{t('Redeemed')}</h4>
@@ -192,6 +201,55 @@ function addExampleRewards() {
     for (const r of ex) if (!have.has(r.name.toLowerCase())) g.rewards.push(r)
   })
   toast(t('Example rewards added'))
+}
+
+/* ============================== import / export ============================== */
+
+// Export ONLY the reward catalogue (small, shareable) — points and history stay in
+// the full backup. Mobile uses the OS share sheet; the web downloads a file.
+async function exportRewards(rewards) {
+  const day = new Date().toISOString().slice(0, 10)
+  const json = JSON.stringify({ gymcat_rewards: 1, exported: day, rewards }, null, 2)
+  const name = 'gymcat-rewards-' + day + '.json'
+  if (MOBILE) {
+    try { await shareExport(json, name); toast(t('Rewards exported')) } catch { /* dismissed */ }
+    return
+  }
+  try {
+    const blob = new Blob([json], { type: 'application/json' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href)
+    toast(t('Rewards exported'))
+  } catch { toast(t('Export failed')) }
+}
+
+// Merge an imported catalogue into the current one: never overwrites, skips rewards
+// that already exist by name, and validates each record.
+function importRewardsFile(file) {
+  const rd = new FileReader()
+  rd.onload = () => {
+    try {
+      const data = JSON.parse(rd.result)
+      const list = Array.isArray(data) ? data : (data && data.rewards)
+      if (!Array.isArray(list)) throw new Error(t('not a GymCat rewards file'))
+      let added = 0
+      editGam(g => {
+        const have = new Set(g.rewards.map(r => (r.name || '').toLowerCase()))
+        for (const r of list) {
+          const name = String(r && r.name || '').trim().slice(0, 40)
+          if (!name || have.has(name.toLowerCase())) continue
+          g.rewards.push({
+            id: uid(), name,
+            desc: String((r && r.desc) || '').slice(0, 80),
+            cost: Math.max(1, Math.round(+(r && r.cost) || 0)) || 100,
+            active: !r || r.active !== false
+          })
+          have.add(name.toLowerCase()); added++
+        }
+      })
+      toast(t('{0} rewards imported', added))
+    } catch (e) { toast(t('Import failed: {0}', e.message)) }
+  }
+  rd.readAsText(file)
 }
 
 /* ============================== scoring rules ============================== */
