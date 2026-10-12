@@ -118,14 +118,19 @@ export function speak(text, tag, voiceName) {
     current = u
     try { synth.resume() } catch { /* */ }   // iOS/Chrome sometimes start paused
     synth.speak(u)
-    // If nothing started shortly after, the utterance was ignored — retry once.
+    // If nothing started shortly after, the utterance was ignored — retry once, and
+    // if it is still silent, say so instead of failing quietly.
     setTimeout(() => {
-      if (current === u && !synth.speaking && !synth.pending && attempt < 1) {
+      if (current !== u) return
+      if (synth.speaking || synth.pending) return
+      if (attempt < 1) {
         attempt++
         try { synth.cancel() } catch { /* */ }
         setTimeout(fire, 120)
+      } else if (errorHandler) {
+        errorHandler('silent')
       }
-    }, 450)
+    }, 500)
   }
 
   try {

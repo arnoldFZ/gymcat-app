@@ -106,7 +106,11 @@ export default function App() {
   // Surface a speech failure instead of staying silent (Chrome reports e.g.
   // 'not-allowed' when the site/tab is muted or audio is blocked).
   useEffect(() => {
-    onSpeechError(code => useUI.getState().toast(t('Voice error: {0}', code)))
+    onSpeechError(code => useUI.getState().toast(
+      code === 'silent'
+        ? t('The browser didn’t play the voice — try another voice in Settings.')
+        : t('Voice error: {0}', code)
+    ))
     return () => onSpeechError(null)
   }, [])
   return <HashRouter><Shell /></HashRouter>
