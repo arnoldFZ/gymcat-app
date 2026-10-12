@@ -33,8 +33,9 @@ const snd = () => S().sound
 
 // GYMPACT: read an exercise (name + steps) aloud in the chosen voice language.
 export function speakExercise(ex) {
-  const { tag } = speechLangs(S())
-  if (!speak(speechText(ex.n, instrFor(ex)), tag)) toast(t('Spoken voice is not available on this device'))
+  const st = S()
+  const { tag } = speechLangs(st)
+  if (!speak(speechText(ex.n, instrFor(ex)), tag, st.speakVoice)) toast(t('Spoken voice is not available on this device'))
 }
 
 // Auto-read when an exercise is opened (only when enabled). Called from the tap that

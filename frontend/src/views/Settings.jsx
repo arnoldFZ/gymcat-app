@@ -13,7 +13,7 @@ import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
 import { plansSheet, confirmSheet, importFromApp } from '../sheets.jsx'
 import { rewardsSheet, rulesSheet, ledgerSheet } from '../gamification.jsx'
 import { rulesOf } from '../lib/gamification/index.js'
-import { isSpeechSupported, speakTest, voiceCount } from '../lib/speech.js'
+import { isSpeechSupported, speakTest, voiceCount, listVoices, speechLangs } from '../lib/speech.js'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
 
@@ -169,6 +169,12 @@ export default function Settings() {
       <Row icon="speakerOff" iconTint="var(--label-2)" title={t('Read on open')} subtitle={t('Speak the exercise automatically when you open it.')}>
         <Switch checked={S.autoSpeak !== false} onChange={v => update(s => { s.autoSpeak = v })} />
       </Row>
+      {isSpeechSupported() && (S.speakLang || 'app') !== 'off' && (
+        <SelectRow icon="speaker" iconTint="var(--blue)" title={t('Voice')} value={S.speakVoice || ''} sheetTitle={t('Voice')}
+          options={[{ value: '', label: t('Automatic') },
+            ...listVoices(speechLangs(S).tag).map(v => ({ value: v.name, label: v.name + (v.localService ? '' : ' · ' + t('online')) }))]}
+          onChange={v => update(s => { s.speakVoice = v || null })} />
+      )}
     </Section>
 
     {(user || MOBILE) && <NotificationsCard S={S} update={update} toast={toast} />}

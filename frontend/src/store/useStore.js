@@ -27,6 +27,8 @@ export const DEF = {
   speakLang: 'app',
   // Read the exercise aloud automatically when it is opened.
   autoSpeak: true,
+  // Optional exact voice name for speech ('' = automatic/local best).
+  speakVoice: null,
   // Nudge (toast + system notification) when one session is left to hit the week.
   gamNudge: true
 }

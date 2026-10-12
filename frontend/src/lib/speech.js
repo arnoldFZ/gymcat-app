@@ -55,10 +55,15 @@ if (isSpeechSupported()) {
 }
 export const voiceCount = () => voices.length
 
-// Best voice for a language tag. Prefers a LOCAL (offline) voice: Chrome's online
-// voices are a common source of "it thinks for a second and says nothing".
-export function chooseVoice(tag) {
+// Best voice for a language tag. An explicit `voiceName` wins; otherwise prefer a
+// LOCAL (offline) voice: Chrome's online "Google" voices are a common source of
+// "it thinks for a second and says nothing".
+export function chooseVoice(tag, voiceName) {
   if (!voices.length) refreshVoices()
+  if (voiceName) {
+    const want = voices.find(v => v.name === voiceName)
+    if (want) return want
+  }
   const t = String(tag || '').toLowerCase()
   const base = t.split('-')[0]
   const lang = v => (v.lang || '').toLowerCase()
@@ -67,6 +72,13 @@ export function chooseVoice(tag) {
   const pool = exact.length ? exact : loose
   if (!pool.length) return null
   return pool.find(v => v.localService) || pool[0]
+}
+
+// Voices available for a language tag, for the Settings picker.
+export function listVoices(tag) {
+  if (!voices.length) refreshVoices()
+  const base = String(tag || '').toLowerCase().split('-')[0]
+  return voices.filter(v => (v.lang || '').toLowerCase().startsWith(base))
 }
 
 let current = null
@@ -86,7 +98,7 @@ export function stopSpeaking() {
 
 // Speak `text` with the voice for `tag`. Returns true when the call was issued.
 // Must be invoked from a user gesture on iOS.
-export function speak(text, tag) {
+export function speak(text, tag, voiceName) {
   if (!isSpeechSupported() || !text) return false
   const synth = window.speechSynthesis
   let attempt = 0
@@ -94,7 +106,7 @@ export function speak(text, tag) {
   const fire = () => {
     const u = new window.SpeechSynthesisUtterance(text)
     u.lang = tag || 'en-US'
-    const v = chooseVoice(u.lang)
+    const v = chooseVoice(u.lang, voiceName)
     if (v) u.voice = v
     u.rate = 1
     u.pitch = 1
@@ -131,10 +143,10 @@ export function speak(text, tag) {
 // which voice it used so the UI can report it.
 export function speakTest(S) {
   const { code, tag } = speechLangs(S)
-  const v = chooseVoice(tag)
+  const v = chooseVoice(tag, S && S.speakVoice)
   const sample = code === 'es'
     ? 'Así suena la voz de tus ejercicios.'
     : 'This is your exercise voice.'
-  const ok = speak(sample, tag)
+  const ok = speak(sample, tag, S && S.speakVoice)
   return { ok, tag, voice: v ? v.name : null }
 }
