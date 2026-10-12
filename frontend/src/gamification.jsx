@@ -7,7 +7,7 @@ import Icon from './components/Icon.jsx'
 import { Button, Switch, TextField, NumberField } from './components/ui.jsx'
 import { confirmSheet } from './sheets.jsx'
 import {
-  balance, applyEvents, tryRedeem, canRedeem,
+  balance, redeem, canRedeem,
   rewardsCatalog, redemptionHistory
 } from './lib/gamification/index.js'
 
@@ -113,9 +113,9 @@ function redeemReward(reward) {
     message: t('This spends {0} points.', reward.cost),
     confirmText: t('Redeem'),
     onConfirm: () => {
-      const res = tryRedeem(useStore.getState().S, reward.id, id)
+      const res = redeem(useStore.getState().S, reward.id, id)
       if (!res.ok) { toast(t('Not enough points')); return }
-      editGam(g => { g.ledger = applyEvents(g.ledger, res.events, Date.now()) })
+      editGam(g => { g.ledger = res.ledger })
       toast(t('Redeemed {0}', reward.name))
     }
   })

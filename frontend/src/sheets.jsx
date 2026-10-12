@@ -20,7 +20,7 @@ import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-sha
 import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
-import { eventsForFinishedWorkout, applyEvents, compensateEvents, compensationForWorkout, reconcileSessionEvents, rulesOf, isValidSession } from './lib/gamification/index.js'
+import { ledgerAfterFinish, ledgerAfterDelete, ledgerAfterCorrect, isValidSession } from './lib/gamification/index.js'
 
 const S = () => useStore.getState().S
 const update = (...a) => useStore.getState().update(...a)
@@ -770,7 +770,7 @@ function WorkoutDetail({ w, close }) {
         return mx > 0 && mx > bestWeightFor(s, e.id, wk.id)
       }).map(e => e.id)
       if (!s.gam) s.gam = { rules: null, ledger: [], rewards: [] }
-      s.gam.ledger = applyEvents(s.gam.ledger, reconcileSessionEvents(s.gam.ledger, wk, rulesOf(s)))
+      s.gam.ledger = ledgerAfterCorrect(s, wk)
     })
     const after = useStore.getState().S.workouts.find(x => x.id === w.id)
     if (wasValid && !isValidSession(after)) toast(t('Session no longer valid — its points were removed.'))
@@ -801,7 +801,7 @@ function WorkoutDetail({ w, close }) {
       // compensating movement that zeroes the points it awarded (weekly/cycle
       // bonuses already earned stand; see docs/GYMPACT_AUDIT.md §6).
       if (!s.gam) s.gam = { ledger: [], rewards: [] }
-      s.gam.ledger = applyEvents(s.gam.ledger, compensateEvents(s.gam.ledger, compensationForWorkout(w)))
+      s.gam.ledger = ledgerAfterDelete(s, w)
     }); close(); toast(t('Workout deleted')) } })}>{t('Delete workout')}</Button>
   </>
 }
@@ -1010,7 +1010,7 @@ function doFinishWorkout() {
     // produced and appends them. Idempotent by key, so a replayed finish can't
     // double the points.
     if (!s.gam) s.gam = { ledger: [], rewards: [] }
-    s.gam.ledger = applyEvents(s.gam.ledger, eventsForFinishedWorkout(s, w), w.end)
+    s.gam.ledger = ledgerAfterFinish(s, w)
   })
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)

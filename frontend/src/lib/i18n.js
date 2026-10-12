@@ -12,6 +12,10 @@ export const LANGS = {
   ko: '한국어', hi: 'हिन्दी'
 }
 export const INSTR_LANGS = ['en', 'es', 'fr', 'it', 'tr', 'ru', 'zh', 'hi', 'pl', 'ko']
+// Languages the product actively offers. English and Spanish are the maintained
+// pair; the other locale packs stay on disk and keep working for a profile that had
+// already selected one, but they are no longer advertised in the picker.
+export const PRIMARY_LANGS = { en: 'English', es: 'Español' }
 const DATE_LOCALES = {
   en: 'en-GB', de: 'de-DE', es: 'es-ES', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT',
   pl: 'pl-PL', tr: 'tr-TR', ru: 'ru-RU', zh: 'zh-CN', ko: 'ko-KR', hi: 'hi-IN'
