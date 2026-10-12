@@ -140,6 +140,16 @@ las instrucciones localizadas cuando están disponibles (español), con el nombr
 ejercicio tal cual (los nombres del catálogo son en inglés). En iOS Safari la voz
 requiere el gesto del toque, así que solo habla cuando pulsas el botón.
 
+## Programa de varias semanas y compartir
+
+- **Programa de N semanas** (por defecto 4, `cycleWeeks`): hoja con las últimas semanas,
+  cuáles cumplieron la meta y el progreso hacia el bonus de ciclo. Se abre desde la línea
+  de racha del dashboard.
+- **Compartir progreso**: desde *Logros*, genera un resumen de texto (semana, racha,
+  puntos, logros) y lo envía por la hoja de compartir del sistema o lo copia al portapapeles.
+- **Meta al empezar**: la tarjeta de bienvenida (sin rutinas) permite elegir la meta
+  semanal (2–5) antes de cargar un plan.
+
 ## Backups y compatibilidad
 
 - Export/import de Settings incluye `gam` (el ledger y las recompensas viajan con

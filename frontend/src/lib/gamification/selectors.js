@@ -84,6 +84,22 @@ export function achievements(S, now) {
   return out
 }
 
+// The multi-week "programme" view: the last `cycleWeeks` weeks with their status and
+// the progress toward the cycle bonus. Powers the "4-week program" sheet.
+export function program(S, now) {
+  const rules = rulesOf(S)
+  const weeks = recentWeeks(S, rules.cycleWeeks, now)
+  const cyc = cycleProgress(S, now)
+  return {
+    weeks,
+    cycleWeeks: rules.cycleWeeks,
+    cycleBonus: rules.cycleBonus,
+    streak: cyc.streak,
+    into: cyc.into,
+    onCycle: cyc.onCycle
+  }
+}
+
 export function dashboardStats(S, now) {
   const rules = rulesOf(S)
   const tz = rules.tz

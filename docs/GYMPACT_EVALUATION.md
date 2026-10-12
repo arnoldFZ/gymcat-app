@@ -56,6 +56,8 @@ pesos, descansos, historial, PWA y passkeys ya existían y no se reescribieron.
 - **Meta por semana** editable desde el dashboard; **export/import del historial de
   puntos** (fusión idempotente por clave); **push de "1 sesión restante" con la app
   cerrada** (servidor, a la hora del recordatorio).
+- **Programa de N semanas**, **compartir progreso** (share/clipboard) y **meta al
+  empezar** desde la bienvenida.
 - **Idiomas principales: inglés y español**, ambos **100% completos** (claves nuevas
   y cadenas preexistentes de demo/self-host). El resto de idiomas siguen
   disponibles y caen a inglés en lo no traducido.

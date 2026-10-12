@@ -7,16 +7,17 @@ import { t, dateLocale } from '../lib/i18n.js'
 import { bwSheet, goalSheet, dayOverrideSheet, calendarSheet, startFlow, plansSheet, bwDeltaColor } from '../sheets.jsx'
 import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
-import { Button } from '../components/ui.jsx'
+import { Button, Segmented } from '../components/ui.jsx'
 import { glyphOf } from '../lib/glyphs.js'
-import { dashboardStats } from '../lib/gamification/index.js'
-import { rewardsSheet, weekGoalSheet } from '../gamification.jsx'
+import { dashboardStats, rulesOf } from '../lib/gamification/index.js'
+import { rewardsSheet, weekGoalSheet, programSheet } from '../gamification.jsx'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
   const nav = useNavigate()
   const S = useStore(s => s.S)
   const user = useStore(s => s.user)
+  const update = useStore(s => s.update)
   const [weekOffset, setWeekOffset] = useState(0)
 
   const today = new Date()
@@ -77,14 +78,15 @@ export default function Home() {
         <div className="gstat"><div className="lbl">{t('Streak')}</div><div className="v">{gam.streak}<span className="small muted">{' ' + t('weeks')}</span></div></div>
       </div>
 
-      {gam.cycle.streak > 0 && (
-        <div className="row small" style={{ gap: 6, marginTop: 10, color: 'var(--label-2)' }}>
-          <Icon name="crown" style={{ color: 'var(--yellow)', fontSize: 15 }} />
-          <span>{gam.cycle.onCycle
+      <button className="row small" style={{ gap: 6, marginTop: 10, color: 'var(--label-2)', width: '100%', textAlign: 'left' }} onClick={programSheet}>
+        <Icon name="crown" style={{ color: 'var(--yellow)', fontSize: 15 }} />
+        <span style={{ flex: 1 }}>{gam.cycle.streak > 0
+          ? (gam.cycle.onCycle
             ? t('{0}-week cycle complete · +{1} points', gam.cycle.cycleWeeks, gam.cycle.bonus)
-            : t('{0}/{1} weeks towards +{2}', gam.cycle.into, gam.cycle.cycleWeeks, gam.cycle.bonus)}</span>
-        </div>
-      )}
+            : t('{0}/{1} weeks towards +{2}', gam.cycle.into, gam.cycle.cycleWeeks, gam.cycle.bonus))
+          : t('Start your {0}-week program', gam.cycle.cycleWeeks)}</span>
+        <Icon name="chevronRight" className="chev" />
+      </button>
       {gam.bestStreak > 0 && (
         <div className="dim small" style={{ marginTop: 6 }}>{t('Best streak: {0} weeks', gam.bestStreak)}</div>
       )}
@@ -155,6 +157,12 @@ export default function Home() {
           <div className="big" style={{ fontSize: 22 }}>{t('Welcome!')}</div>
         </div>
         <div className="muted small" style={{ marginBottom: 12 }}>{t('Set up your weekly routine — pick a ready-made plan or build your own.')}</div>
+        <div className="row between" style={{ marginBottom: 12 }}>
+          <span className="small">{t('Weekly goal')}</span>
+          <Segmented className="seg-inline" options={[2, 3, 4, 5].map(n => ({ value: n, label: String(n) }))}
+            value={rulesOf(S).weeklyTarget}
+            onChange={n => update(s => { if (!s.gam) s.gam = { rules: null, ledger: [], rewards: [] }; s.gam.rules = { ...(s.gam.rules || {}), weeklyTarget: n } })} />
+        </div>
         <Button variant="primary" icon="sparkles" onClick={plansSheet}>{t('See suggested plans')}</Button>
         <div style={{ height: 8 }} /><Button onClick={() => nav('/plan')}>{t('Build my own plan')}</Button>
       </div>

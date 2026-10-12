@@ -10,7 +10,7 @@ import {
   reconcileSessionEvents, familyNet,
   activeRewards, canRedeem, nextReward, tryRedeem, redemptionHistory,
   dashboardStats, recentWeeks, complianceRate, cycleProgress, lastSession, pointsByType, targetForWeek,
-  bestStreak, achievements
+  bestStreak, achievements, program
 } from '../index.js'
 
 /* ------------------------------------------------------------------ helpers */
@@ -420,6 +420,16 @@ describe('cycle progress, last session, points breakdown', () => {
 })
 
 /* -------------------------------------------------- backwards compatibility */describe('records and achievements', () => {
+  it('program reports the last cycleWeeks weeks and progress', () => {
+    const S = emptyS()
+    for (const wk of [0, 1]) for (const w of weekOf(0, wk)) S.workouts.push(w)   // W02, W03 fulfilled
+    const p = program(S, at('2026-01-12T15:00:00Z'))                             // current week W03
+    expect(p.cycleWeeks).toBe(4)
+    expect(p.weeks).toHaveLength(4)
+    expect(p.weeks[p.weeks.length - 1].weekKey).toBe('2026-W03')
+    expect(p.streak).toBe(2)
+    expect(p.into).toBe(2)
+  })
   it('bestStreak finds the longest historical run', () => {
     const S = emptyS()
     for (const wk of [0, 1]) for (const w of weekOf(0, wk)) S.workouts.push(w)   // W02, W03

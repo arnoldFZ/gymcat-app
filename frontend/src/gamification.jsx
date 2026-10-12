@@ -10,7 +10,8 @@ import { confirmSheet } from './sheets.jsx'
 import {
   balance, redeem, canRedeem,
   rewardsCatalog, redemptionHistory,
-  rulesOf, targetForWeek, DEFAULT_RULES, entries, pointsByType, achievements
+  rulesOf, targetForWeek, DEFAULT_RULES, entries, pointsByType, achievements,
+  dashboardStats, program
 } from './lib/gamification/index.js'
 
 const ui = () => useUI.getState()
@@ -438,8 +439,69 @@ function Achievements({ close }) {
       ))}
     </div>
     <div style={{ height: 8 }} />
+    <Button icon="upload" onClick={shareProgress}>{t('Share my progress')}</Button>
+    <div style={{ height: 8 }} />
     <Button variant="ghost" className="dim" onClick={close}>{t('Close')}</Button>
   </>
+}
+
+/* ============================== 4-week program ============================== */
+
+export const programSheet = () => ui().openSheet(close => <Program close={close} />, { kind: 'center' })
+
+function Program({ close }) {
+  const S = useStore(s => s.S)
+  const p = program(S)
+  return <>
+    <h3>{t('{0}-week program', p.cycleWeeks)}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('Reach the goal {0} weeks in a row to earn +{1} points.', p.cycleWeeks, p.cycleBonus)}</div>
+    <div className="list">
+      {p.weeks.map(w => {
+        const target = targetForWeek(S, w.weekKey)
+        return (
+          <div key={w.weekKey} className={'item' + (w.fulfilled ? '' : ' dim')}>
+            <span className="lrow-i" style={w.fulfilled ? { background: 'var(--acc-soft)', color: 'var(--acc)' } : { background: 'var(--surface-2)' }}>
+              <Icon name={w.fulfilled ? 'check' : 'calendar'} />
+            </span>
+            <div className="grow">
+              <div className="tt">{w.weekKey}</div>
+              <div className="ss">{t('{0} of {1} sessions', w.count, target)}</div>
+            </div>
+            {w.fulfilled && <Icon name="check" className="accent" />}
+          </div>
+        )
+      })}
+    </div>
+    <div className="row small" style={{ gap: 6, marginTop: 12, color: 'var(--label-2)' }}>
+      <Icon name="crown" style={{ color: 'var(--yellow)' }} />
+      <span>{p.onCycle
+        ? t('{0}-week cycle complete · +{1} points', p.cycleWeeks, p.cycleBonus)
+        : t('{0}/{1} weeks towards +{2}', p.into, p.cycleWeeks, p.cycleBonus)}</span>
+    </div>
+    <div style={{ height: 12 }} />
+    <Button variant="ghost" className="dim" onClick={close}>{t('Close')}</Button>
+  </>
+}
+
+/* ============================== share progress ============================== */
+
+async function shareProgress() {
+  const S = useStore.getState().S
+  const d = dashboardStats(S)
+  const list = achievements(S)
+  const unlocked = list.filter(a => a.unlocked).length
+  const text = [
+    'GYMPACT',
+    t('This week: {0} of {1} sessions', d.sessions, d.target),
+    t('Streak: {0} weeks (best {1})', d.streak, d.bestStreak),
+    t('Points: {0} (this week +{1})', d.balance, d.earnedThisWeek),
+    t('Achievements: {0} of {1}', unlocked, list.length)
+  ].join('\n')
+  try {
+    if (typeof navigator !== 'undefined' && navigator.share) { await navigator.share({ text }); return }
+    if (typeof navigator !== 'undefined' && navigator.clipboard) { await navigator.clipboard.writeText(text); toast(t('Progress copied to the clipboard')); return }
+    toast(text)
+  } catch { /* user cancelled the share sheet */ }
 }
 
 /* ============================== points history ============================== */
