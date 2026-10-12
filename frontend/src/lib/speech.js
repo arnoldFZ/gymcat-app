@@ -74,11 +74,21 @@ export function chooseVoice(tag, voiceName) {
   return pool.find(v => v.localService) || pool[0]
 }
 
-// Voices available for a language tag, for the Settings picker.
+// All available voices, ordered so those matching `tag` come first (exact language,
+// then same base language, then the rest). The Settings picker shows the whole list
+// so nothing is hidden — the count difference between EN and ES is just how many
+// voices the operating system has installed for each language.
 export function listVoices(tag) {
   if (!voices.length) refreshVoices()
-  const base = String(tag || '').toLowerCase().split('-')[0]
-  return voices.filter(v => (v.lang || '').toLowerCase().startsWith(base))
+  const t = String(tag || '').toLowerCase()
+  const base = t.split('-')[0]
+  const rank = v => {
+    const l = (v.lang || '').toLowerCase()
+    if (l === t) return 0
+    if (l.startsWith(base)) return 1
+    return 2
+  }
+  return voices.slice().sort((a, b) => rank(a) - rank(b) || String(a.name || '').localeCompare(String(b.name || '')))
 }
 
 let current = null

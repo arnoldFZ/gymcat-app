@@ -172,7 +172,7 @@ export default function Settings() {
       {isSpeechSupported() && (S.speakLang || 'app') !== 'off' && (
         <SelectRow icon="speaker" iconTint="var(--blue)" title={t('Voice')} value={S.speakVoice || ''} sheetTitle={t('Voice')}
           options={[{ value: '', label: t('Automatic') },
-            ...listVoices(speechLangs(S).tag).map(v => ({ value: v.name, label: v.name + (v.localService ? '' : ' · ' + t('online')) }))]}
+            ...listVoices(speechLangs(S).tag).map(v => ({ value: v.name, label: v.name + ' · ' + v.lang + (v.localService ? '' : ' · ' + t('online')) }))]}
           onChange={v => update(s => { s.speakVoice = v || null })} />
       )}
     </Section>
