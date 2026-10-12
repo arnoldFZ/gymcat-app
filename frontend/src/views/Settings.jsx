@@ -156,11 +156,10 @@ export default function Settings() {
       <Row icon="speaker" iconTint="var(--blue)" title={t('Exercise voice')} subtitle={isSpeechSupported() ? t('Read instructions aloud.') : t('Not supported in this browser.')}>
         <div className="row" style={{ gap: 8 }}>
           {isSpeechSupported() && <Button size="sm" icon="play" onClick={() => {
-            const n = voiceCount()
-            const ok = speakTest(S)
-            if (!ok) toast(t('Voice not supported here'))
-            else if (n === 0) toast(t('No system voices found — check your OS language settings.'))
-            else toast(t('Testing voice — {0} voices available.', n))
+            const info = speakTest(S)
+            if (!info.ok) toast(t('Voice not supported here'))
+            else if (voiceCount() === 0) toast(t('No system voices found — check your OS language settings.'))
+            else toast(info.voice ? t('Testing voice — using {0}.', info.voice) : t('Testing voice — {0} voices available.', voiceCount()))
           }}>{t('Test')}</Button>}
           <Segmented className="seg-inline"
             options={[{ value: 'off', label: t('Off') }, { value: 'app', label: t('Auto') }, { value: 'en', label: 'EN' }, { value: 'es', label: 'ES' }]}

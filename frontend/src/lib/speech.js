@@ -5,14 +5,16 @@
 // decided by another (`speechLangs`), so both are unit-testable; only `speak`/
 // `stopSpeaking` touch the browser.
 //
-// iOS Safari only allows speechSynthesis from a user gesture (a tap), which is how
-// it is used here. Two iOS-specific rules keep it audible:
-//   · set only `utterance.lang` — forcing a `voice` that isn't actually installed
-//     (Apple lists many that must be downloaded) produces SILENCE;
-//   · call `resume()` after `speak()`, because iOS often starts paused.
+// Getting speech to actually PLAY is the hard part, and each engine has its own trap:
+//   · Chrome lists voices but, with no voice chosen, may fall back to an ONLINE
+//     "Google" voice that fails silently (no error, no sound). Picking an explicit
+//     LOCAL voice for the language fixes it — see `chooseVoice`.
+//   · Chrome also silently ignores a `speak()` issued in the same tick as `cancel()`,
+//     and can drop the very first utterance — hence the cancel-then-defer and the
+//     start-detection retry below.
+//   · iOS Safari only speaks from a user gesture, starts paused (needs `resume()`),
+//     and can garbage-collect a detached utterance (hence the retained reference).
 
-// Voice language for each supported UI language. Spanish defaults to es-ES; the
-// system falls back to any es-* voice if es-ES isn't present.
 const SPEECH_TAGS = { en: 'en-US', es: 'es-ES' }
 
 export function isSpeechSupported() {
@@ -42,8 +44,6 @@ export function speechText(name, steps) {
   return head + sep + body
 }
 
-// Cache the voice list for diagnostics (the Settings "test" shows the count). We do
-// NOT pick a specific voice to speak with — see `speak`.
 let voices = []
 function refreshVoices() {
   if (!isSpeechSupported()) return
@@ -55,10 +55,23 @@ if (isSpeechSupported()) {
 }
 export const voiceCount = () => voices.length
 
+// Best voice for a language tag. Prefers a LOCAL (offline) voice: Chrome's online
+// voices are a common source of "it thinks for a second and says nothing".
+export function chooseVoice(tag) {
+  if (!voices.length) refreshVoices()
+  const t = String(tag || '').toLowerCase()
+  const base = t.split('-')[0]
+  const lang = v => (v.lang || '').toLowerCase()
+  const exact = voices.filter(v => lang(v) === t)
+  const loose = voices.filter(v => lang(v).startsWith(base))
+  const pool = exact.length ? exact : loose
+  if (!pool.length) return null
+  return pool.find(v => v.localService) || pool[0]
+}
+
 let current = null
 let errorHandler = null
-// Let the app surface a speech failure (Chrome reports e.g. 'not-allowed' or
-// 'synthesis-failed' instead of just staying silent). Optional.
+// Let the app surface a speech failure (Chrome may report e.g. 'not-allowed').
 export function onSpeechError(fn) { errorHandler = fn }
 function reportError(u, e) {
   if (current === u) current = null
@@ -71,30 +84,41 @@ export function stopSpeaking() {
   current = null
 }
 
-// Speak `text` with the voice for `tag`. Returns false when unsupported/empty.
+// Speak `text` with the voice for `tag`. Returns true when the call was issued.
 // Must be invoked from a user gesture on iOS.
 export function speak(text, tag) {
   if (!isSpeechSupported() || !text) return false
   const synth = window.speechSynthesis
+  let attempt = 0
+
   const fire = () => {
     const u = new window.SpeechSynthesisUtterance(text)
     u.lang = tag || 'en-US'
+    const v = chooseVoice(u.lang)
+    if (v) u.voice = v
     u.rate = 1
     u.pitch = 1
     u.volume = 1
     u.onend = () => { if (current === u) current = null }
     u.onerror = e => reportError(u, e)
     // Hold a reference: browsers can garbage-collect a detached utterance and then
-    // simply never play it — the classic "nothing happens" speech bug.
+    // simply never play it.
     current = u
+    try { synth.resume() } catch { /* */ }   // iOS/Chrome sometimes start paused
     synth.speak(u)
-    if (synth.paused) synth.resume()
+    // If nothing started shortly after, the utterance was ignored — retry once.
+    setTimeout(() => {
+      if (current === u && !synth.speaking && !synth.pending && attempt < 1) {
+        attempt++
+        try { synth.cancel() } catch { /* */ }
+        setTimeout(fire, 120)
+      }
+    }, 450)
   }
+
   try {
-    // Chrome drops an utterance queued in the SAME tick as cancel(). Only cancel when
-    // something is actually playing, and defer the new speech a moment after it.
     if (synth.speaking || synth.pending) {
-      synth.cancel()
+      synth.cancel()                 // Chrome drops a speak queued in the same tick
       setTimeout(fire, 80)
     } else {
       fire()
@@ -103,11 +127,14 @@ export function speak(text, tag) {
   } catch { return false }
 }
 
-// A short sample in the chosen language, for the Settings "Test" button.
+// A short sample in the chosen language, for the Settings "Test" button. Returns
+// which voice it used so the UI can report it.
 export function speakTest(S) {
   const { code, tag } = speechLangs(S)
+  const v = chooseVoice(tag)
   const sample = code === 'es'
     ? 'Así suena la voz de tus ejercicios.'
     : 'This is your exercise voice.'
-  return speak(sample, tag)
+  const ok = speak(sample, tag)
+  return { ok, tag, voice: v ? v.name : null }
 }

@@ -725,4 +725,5 @@ export default {
   'Voice not supported here': 'La voz no es compatible aquí',
   'No system voices found — check your OS language settings.': 'No se encontraron voces del sistema: revisa el idioma del sistema operativo.',
   'Testing voice — {0} voices available.': 'Probando la voz: {0} voces disponibles.',
+  'Testing voice — using {0}.': 'Probando la voz: usando {0}.',
 }
