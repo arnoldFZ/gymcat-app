@@ -7,6 +7,7 @@ import {
   sessionKey, weekBonusKey, cycleBonusKey,
   eventsForFinishedWorkout, compensationForWorkout,
   applyEvents, balance, hasKey, entriesForKey, compensateEvents, pointsEarnedInWeek,
+  reconcileSessionEvents, familyNet,
   activeRewards, canRedeem, nextReward, tryRedeem, redemptionHistory,
   dashboardStats, recentWeeks, complianceRate
 } from '../index.js'
@@ -337,8 +338,46 @@ describe('fulfilledWeekKeys', () => {
   })
 })
 
-/* -------------------------------------------------- backwards compatibility */
+/* ---------------------------------------------------- session correction */
 
+describe('correcting a saved session', () => {
+  it('marking the last set undone removes its points; marking it done restores them', () => {
+    const S = emptyS()
+    const w = wAt('w1', at('2026-01-05T15:00:00Z'), '2026-01-05')
+    finish(S, w)
+    expect(balance(S.gam.ledger)).toBe(100)
+
+    // Correct it to invalid (no done sets) through the reconciler.
+    const invalid = { ...w, entries: [{ id: 'bench', sets: [{ w: 60, r: 5, done: false }] }] }
+    S.gam.ledger = applyEvents(S.gam.ledger, reconcileSessionEvents(S.gam.ledger, invalid, rulesOf(S)))
+    expect(familyNet(S.gam.ledger, sessionKey('w1'))).toBe(0)
+    expect(balance(S.gam.ledger)).toBe(0)
+    expect(entriesForKey(S.gam.ledger, sessionKey('w1'))).toHaveLength(1)   // original kept
+
+    // Re-running reconciliation with the same (invalid) state changes nothing.
+    const again = applyEvents(S.gam.ledger, reconcileSessionEvents(S.gam.ledger, invalid, rulesOf(S)))
+    expect(balance(again)).toBe(0)
+    expect(again).toHaveLength(S.gam.ledger.length)
+
+    // Correct it back to valid — a fresh adjustment restores the points.
+    S.gam.ledger = applyEvents(again, reconcileSessionEvents(again, w, rulesOf(S)))
+    expect(familyNet(S.gam.ledger, sessionKey('w1'))).toBe(100)
+    expect(balance(S.gam.ledger)).toBe(100)
+    // Deleting a corrected session still zeroes the whole family.
+    S.gam.ledger = applyEvents(S.gam.ledger, compensateEvents(S.gam.ledger, sessionKey('w1')))
+    expect(balance(S.gam.ledger)).toBe(0)
+  })
+
+  it('records the rule version on scoring movements', () => {
+    const S = emptyS()
+    const evs = eventsForFinishedWorkout({ workouts: [] }, wAt('w1', at('2026-01-05T15:00:00Z'), '2026-01-05'))
+    expect(evs[0].meta.ruleVersion).toBe(DEFAULT_RULES.ruleVersion)
+    const ledger = applyEvents([], evs)
+    expect(ledger[0].meta.ruleVersion).toBe(1)
+  })
+})
+
+/* -------------------------------------------------- backwards compatibility */
 describe('profiles written before the feature', () => {
   it('works with no `gam` key and with a partially-set one', () => {
     const legacy = { workouts: [], routines: [], bodyweight: [] }   // pre-GYMPACT state

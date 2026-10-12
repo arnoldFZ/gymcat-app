@@ -12,7 +12,10 @@ export const DEFAULT_RULES = {
   weeklyBonus: 150,     // when the week's target is reached
   cycleWeeks: 4,        // consecutive fulfilled weeks for the cycle bonus
   cycleBonus: 300,      // when a 4-week cycle is completed
-  tz: 'America/Lima'    // weeks are defined in this zone, not the device's
+  tz: 'America/Lima',   // weeks are defined in this zone, not the device's
+  // Bumped whenever the scoring semantics above change, so every ledger movement
+  // records which rule set produced it and past points stay explainable.
+  ruleVersion: 1
 }
 
 // Merge the profile's overrides over the defaults. `S.gam.rules` is optional and

@@ -43,10 +43,16 @@ y cambio de año (`2025-12-29` → `2026-W01`, etc.).
   Reprocesar el mismo evento no duplica puntos (probado).
 - **Saldo** = suma de `delta`. No es un contador editable aparte; no puede
   desincronizarse.
-- **Borrar una sesión** (`WorkoutDetail` → Delete) añade un movimiento
-  compensatorio `comp:session:<id>` que anula sus puntos; **no borra** el
-  historial. Los bonus semanales/de ciclo ya ganados se mantienen (se ganaron
-  cuando la semana llegó a la meta).
+- Cada movimiento de puntuación guarda `meta.ruleVersion` (por defecto `1`), de modo
+  que cambiar las reglas en el futuro no reinterpreta el pasado.
+- **Corregir una sesión** (en el detalle del entrenamiento, toca una serie para
+  marcarla hecha/no hecha): `reconcileSessionEvents` lleva el **neto** de esa sesión a
+  `+100` (válida) o `0` (ya no válida) con un movimiento `…:adj:<n>` idempotente. La
+  sesión sigue en el historial; solo se añade un ajuste.
+- **Borrar una sesión** (`WorkoutDetail` → Delete) añade un movimiento compensatorio
+  `comp:session:<id>` que anula el **neto de toda la familia** (concesión + ajustes);
+  **no borra** el historial. Los bonus semanales/de ciclo ya ganados se mantienen (se
+  ganaron cuando la semana llegó a la meta).
 - Los bonus semanales y de ciclo se evalúan contra **todo** el historial válido
   de la semana/ciclo, no solo contra las sesiones posteriores a la feature.
 
@@ -112,3 +118,22 @@ La lógica de dominio es **pura y sin React**. La frontera de finalización
 
 `cd frontend && npm test` — incluye los 12 criterios de aceptación y los límites
 de zona (`America/Lima`), mes y año. `npm run build` para el bundle.
+
+## Verificación manual en iPhone (checklist)
+
+Lo automatizable está cubierto por tests; esto requiere un dispositivo y no se ha
+ejecutado aquí. Al abrir en Safari (o como PWA añadida a inicio):
+
+- [ ] Sin scroll horizontal en anchos de iPhone (375 / 390 / 430 px) y en el
+  mínimo soportado (320 px).
+- [ ] La tarjeta *Meta semanal* (barra, `X/3`, estadísticas) se lee bien y el botón
+  iniciar/continuar es cómodo de pulsar.
+- [ ] La hoja *Recompensas* funciona en pantalla pequeña; añadir/editar y canjear.
+- [ ] En el detalle de un entrenamiento, tocar una serie cambia los puntos y avisa
+  ("ya no es válida" / "vuelve a contar").
+- [ ] Contraste correcto en tema claro y oscuro y con los 8 acentos; foco visible
+  al navegar con teclado.
+- [ ] VoiceOver: la barra de meta anuncia valor (`role="progressbar"`) y los
+  botones tienen etiqueta.
+- [ ] Áreas táctiles ≥ 44 px en los controles nuevos.
+

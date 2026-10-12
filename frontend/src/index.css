@@ -232,6 +232,15 @@ h4.sec{
 .gnext .grow .ss{color:var(--label-2);font-size:12.5px;margin-top:1px}
 .gnext:active{opacity:.65}
 
+/* Tappable set chips in the workout-detail sheet: correcting a saved session. */
+.setchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{
+  font:inherit;font-size:13px;line-height:1.2;padding:5px 9px;border-radius:8px;
+  background:var(--surface-2);color:var(--label-3);
+}
+.chip.on{background:var(--acc-soft);color:var(--acc);font-weight:500}
+.chip:active{opacity:.7}
+
 /* ------------------------------------------------------ inset group list -- */
 .sect{margin-bottom:22px}
 .sect-t{

@@ -20,7 +20,7 @@ import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-sha
 import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
-import { eventsForFinishedWorkout, applyEvents, compensateEvents, compensationForWorkout } from './lib/gamification/index.js'
+import { eventsForFinishedWorkout, applyEvents, compensateEvents, compensationForWorkout, reconcileSessionEvents, rulesOf, isValidSession } from './lib/gamification/index.js'
 
 const S = () => useStore.getState().S
 const update = (...a) => useStore.getState().update(...a)
@@ -749,17 +749,46 @@ export const dayAssignSheet = day => ui().openSheet(close => <DayAssign day={day
 /* ============================ workout detail ============================ */
 function WorkoutDetail({ w, close }) {
   const st = useStore(s => s.S)
+  // Read the live workout so tapping a set updates this sheet immediately.
+  const live = st.workouts.find(x => x.id === w.id) || w
+
+  // Correcting a saved session: flip a set's `done`, recompute volume, then let the
+  // reconciler move the session's net points to match its new validity. The session
+  // stays in history either way; only a balancing movement is appended.
+  const toggleSet = (ei, si) => {
+    const wasValid = isValidSession(live)
+    update(s => {
+      const wk = s.workouts.find(x => x.id === w.id)
+      const set = wk && wk.entries[ei] && wk.entries[ei].sets[si]
+      if (!set) return
+      set.done = !set.done
+      wk.vol = workoutVolume(wk)
+      if (!s.gam) s.gam = { rules: null, ledger: [], rewards: [] }
+      s.gam.ledger = applyEvents(s.gam.ledger, reconcileSessionEvents(s.gam.ledger, wk, rulesOf(s)))
+    })
+    const after = useStore.getState().S.workouts.find(x => x.id === w.id)
+    if (wasValid && !isValidSession(after)) toast(t('Session no longer valid — its points were removed.'))
+    else if (!wasValid && isValidSession(after)) toast(t('Session counts again — its points were restored.'))
+  }
+
   return <>
-    <h3>{w.name}</h3>
-    <div className="muted small" style={{ marginBottom: 12 }}>{[fmtDate(w.d, true), ...durPart(w.end - w.start), fmtVol(w.vol, st.unit), ...(w.bw ? [fmtNum(w.bw) + ' ' + st.unit] : [])].join(' · ')}</div>
-    {w.entries.map((e, i) => {
+    <h3>{live.name}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{[fmtDate(live.d, true), ...durPart(live.end - live.start), fmtVol(live.vol, st.unit), ...(live.bw ? [fmtNum(live.bw) + ' ' + st.unit] : [])].join(' · ')}</div>
+    {live.entries.map((e, i) => {
       const ex = EXIDX[e.id]
       return <div key={i} className="row" style={{ marginBottom: 12, alignItems: 'flex-start' }}>
         {ex && <Thumb ex={ex} />}
-        <div className="grow"><div className="tt capitalize" style={{ fontWeight: 600 }}>{ex ? ex.n : (e.n || e.id)} {w.prs && w.prs.includes(e.id) && <span className="pr"><Icon name="trophy" />PR</span>}</div>
-          <div className="ss">{e.sets.filter(s => s.done).map(s => setLabel(e.id, s, e.target)).join('  ·  ') || t('no sets')}</div></div>
+        <div className="grow"><div className="tt capitalize" style={{ fontWeight: 600 }}>{ex ? ex.n : (e.n || e.id)} {live.prs && live.prs.includes(e.id) && <span className="pr"><Icon name="trophy" />PR</span>}</div>
+          <div className="setchips">
+            {e.sets.map((s, si) => (
+              <button key={si} className={'chip' + (s.done ? ' on' : '')} onClick={() => toggleSet(i, si)} aria-pressed={!!s.done}>
+                {setLabel(e.id, s, e.target)}
+              </button>
+            ))}
+          </div></div>
       </div>
     })}
+    <div className="muted small" style={{ marginBottom: 10 }}>{t('Tap a set to mark it done or not done — your points adjust automatically.')}</div>
     <Button variant="danger" onClick={() => confirmSheet({ title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true, onConfirm: () => { update(s => {
       s.workouts = s.workouts.filter(x => x.id !== w.id)
       // GYMPACT: deleting a session never erases its ledger history — it appends a

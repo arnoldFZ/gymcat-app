@@ -29,18 +29,18 @@ export const cycleBonusKey = weekKey => 'cycle:' + weekKey
 export const redeemKey = redemptionId => 'redeem:' + redemptionId
 export const compensationKey = key => 'comp:' + key
 
-function event(type, delta, key, ref, meta) {
-  return { type, delta, key, ref: ref || {}, meta: meta || {} }
+function event(type, delta, key, ref, meta, rules) {
+  return { type, delta, key, ref: ref || {}, meta: { ruleVersion: rules && rules.ruleVersion, ...(meta || {}) } }
 }
 
 export function sessionEvent(w, rules) {
-  return event(EVENT.SESSION, rules.sessionPoints, sessionKey(w.id), { workoutId: w.id }, { d: w.d })
+  return event(EVENT.SESSION, rules.sessionPoints, sessionKey(w.id), { workoutId: w.id }, { d: w.d }, rules)
 }
 export function weekBonusEvent(weekKey, rules) {
-  return event(EVENT.WEEK_BONUS, rules.weeklyBonus, weekBonusKey(weekKey), { weekKey })
+  return event(EVENT.WEEK_BONUS, rules.weeklyBonus, weekBonusKey(weekKey), { weekKey }, {}, rules)
 }
 export function cycleBonusEvent(weekKey, rules) {
-  return event(EVENT.CYCLE_BONUS, rules.cycleBonus, cycleBonusKey(weekKey), { weekKey })
+  return event(EVENT.CYCLE_BONUS, rules.cycleBonus, cycleBonusKey(weekKey), { weekKey }, {}, rules)
 }
 export function redeemEvent(reward, redemptionId) {
   return event(EVENT.REDEEM, -Math.max(0, reward.cost), redeemKey(redemptionId),

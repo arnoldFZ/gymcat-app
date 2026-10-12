@@ -14,7 +14,8 @@
 // converges instead of double-counting. See docs/GYMPACT_AUDIT.md §6.
 
 import { weekKeyOf } from './weekly-goals.js'
-import { compensationKey } from './events.js'
+import { isValidSession } from './rules.js'
+import { sessionKey, compensationKey } from './events.js'
 
 let seq = 0
 function newId() {
@@ -29,6 +30,20 @@ export function hasKey(ledger, key) {
 }
 export function entriesForKey(ledger, key) {
   return entries(ledger).filter(e => e.key === key)
+}
+// A session's points are not a single ledger row once it has been corrected: the
+// original grant, any invalidation, and the compensations form a FAMILY that must
+// be balanced as a whole. `familyNet` is that balance; `familyCount` names the next
+// adjustment so its key stays unique.
+const inFamily = key => e => e.key === key || e.key === compensationKey(key) || String(e.key).startsWith(key + ':adj:')
+export function familyEntries(ledger, key) {
+  return entries(ledger).filter(inFamily(key))
+}
+export function familyNet(ledger, key) {
+  return familyEntries(ledger, key).reduce((n, e) => n + (+e.delta || 0), 0)
+}
+export function familyCount(ledger, key) {
+  return familyEntries(ledger, key).length
 }
 export function balance(ledger) {
   return entries(ledger).reduce((n, e) => n + (+e.delta || 0), 0)
@@ -54,17 +69,16 @@ export function applyEvents(ledger, events, now) {
   return out
 }
 
-// Build the compensating movements for everything logged under `key` (e.g. a
-// deleted workout's session points). Returns events for `applyEvents`, or [] when
-// there is nothing to undo or it was already compensated — so calling it twice is
-// safe. Weekly/cycle bonuses are intentionally NOT reversed: they were legitimately
-// earned when the week reached its target, and the brief forbids rewriting history.
+// Build the compensating movement for everything logged under `key` (e.g. a
+// deleted workout's session points, including any corrections). Returns events for
+// `applyEvents`, or [] when there is nothing to undo or it was already
+// compensated — so calling it twice is safe. Weekly/cycle bonuses are intentionally
+// NOT reversed: they were legitimately earned when the week reached its target, and
+// the brief forbids rewriting history.
 export function compensateEvents(ledger, key, now) {
-  const original = entriesForKey(ledger, key)
-  if (!original.length) return []
   const compKey = compensationKey(key)
   if (hasKey(ledger, compKey)) return []
-  const total = original.reduce((n, e) => n + (+e.delta || 0), 0)
+  const total = familyNet(ledger, key)
   if (total === 0) return []
   return [{
     type: 'compensation',
@@ -72,6 +86,27 @@ export function compensateEvents(ledger, key, now) {
     key: compKey,
     ref: { compensates: key },
     meta: {},
+    date: new Date(now == null ? Date.now() : now).toISOString()
+  }]
+}
+
+// Bring a session's point balance in line with whether it is currently valid.
+// Used when a saved session is CORRECTED (a set marked done/undone): the session
+// keeps its history, but its net points move to `sessionPoints` (valid) or 0
+// (no longer valid). Idempotent — once net == desired it returns nothing, so
+// re-running a correction can't double-adjust. Weekly/cycle bonuses are left alone
+// (they were earned by the week, not by this row).
+export function reconcileSessionEvents(ledger, workout, rules, now) {
+  const key = sessionKey(workout.id)
+  const current = familyNet(ledger, key)
+  const desired = isValidSession(workout) ? (+rules.sessionPoints || 0) : 0
+  if (current === desired) return []
+  return [{
+    type: desired === 0 ? 'compensation' : 'session',
+    delta: desired - current,
+    key: key + ':adj:' + familyCount(ledger, key),
+    ref: { workoutId: workout.id, adjusts: key },
+    meta: { ruleVersion: rules.ruleVersion },
     date: new Date(now == null ? Date.now() : now).toISOString()
   }]
 }

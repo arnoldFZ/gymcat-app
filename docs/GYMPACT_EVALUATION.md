@@ -39,17 +39,21 @@ pesos, descansos, historial, PWA y passkeys ya existían y no se reescribieron.
   disponibles/semana, racha, recompensa próxima, iniciar/continuar; estados
   vacíos honestos.
 - **Analítica** (Stats): puntos, racha, % de semanas cumplidas, sesiones/semana.
+- **Corrección de sesión**: desde el detalle del entrenamiento se marca/desmarca
+  una serie; el ledger reconcilia el neto de la sesión (invalidar quita puntos,
+  volver a validar los restaura) sin borrar historial.
+- **`ruleVersion`** en cada movimiento de puntuación.
+- **i18n**: cadenas nuevas traducidas a **es**; el resto de idiomas cae a inglés.
 - Renombrado a **GymCat** conservando compatibilidad de datos y atribución.
 
 ### Pendientes / no hechas
 - **No hay puntos retroactivos** por historial previo/importado (decisión
   documentada, no un descuido).
-- **No hay migración de reglas versionada** en el ledger (C la pide: `rule_version`).
-  El ledger no guarda la versión de reglas con la que se calculó cada movimiento.
 - **No hay autoridad de servidor** sobre los puntos (ver §5).
-- **i18n**: las cadenas nuevas caen a inglés; solo las claves existentes están
-  traducidas a los 11 idiomas. Añadir `es`/resto es trabajo mecánico pendiente.
-- Edición de una sesión ya guardada (no solo borrado) no existe en la app base.
+- **i18n**: de, fr, it, pt, pl, tr, ru, zh, ko, hi siguen cayendo a inglés para las
+  cadenas nuevas (pendiente mecánico).
+- Recalcular `prs` (PRs) tras corregir series no se hace: un PR puede quedar
+  marcado aunque se deshaga la serie (el volumen y la validez sí se recalculan).
 
 ## 3. Tests y build
 
@@ -57,10 +61,10 @@ pesos, descansos, historial, PWA y passkeys ya existían y no se reescribieron.
 |---|---|
 | `npm test` | ✅ **8 ficheros, 221 tests** (192 base + 29 nuevos) |
 | `npm run build` | ✅ Vite, ~0,4 s (aviso de chunk > 1,5 MB, preexistente) |
-| Cobertura de aceptación | 12/12 del spec B en dominio |
+| Cobertura de aceptación | 12/12 del spec B en dominio + corrección de sesión |
 
 Criterios 1–12 del spec B: 1,2,3 (sesión/duplicados), 4 (bonus semanal),
-5,6 (ciclo y racha), 7 (Lima), 8,9 (canjes), 10 (coherencia al borrar),
+5,6 (ciclo y racha), 7 (Lima), 8,9 (canjes), 10 (coherencia al borrar/corregir),
 11 (historial intacto/no mutado), 12 (dashboard sin historial) — todos automatizados.
 
 ## 4. UX en iPhone
@@ -110,11 +114,10 @@ Criterios 1–12 del spec B: 1,2,3 (sesión/duplicados), 4 (bonus semanal),
 
 1. Depender de idempotencia en cliente, no de transacción. Aceptable para uso
    personal; revisar si se vuelve multi-usuario.
-2. El ledger no registra `rule_version`; cambiar reglas hoy reinterpreta pasado.
-   Arreglo barato: añadir `meta.ruleVersion` a cada evento.
-3. Semana/racha calculada a partir de `S.workouts` en cada lectura (no
+2. Semana/racha calculada a partir de `S.workouts` en cada lectura (no
    materializada). Rápido para volúmenes personales; vigilar con historial enorme.
-4. Traducciones de las cadenas nuevas pendientes (caen a inglés).
+3. Traducciones de las cadenas nuevas solo en `es`; el resto cae a inglés.
+4. Corregir series no recalcula los PRs de esa sesión (volumen y validez sí).
 5. 19 vulnerabilidades en el árbol de dependencias (preexistentes, no atribuibles
    a esta feature) y chunks grandes (preexistente).
 
