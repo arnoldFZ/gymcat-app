@@ -4,7 +4,7 @@ import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { bindUI } from './components/ui.jsx'
 import { ACCENTS } from './lib/format.js'
-import { setLang, useLang } from './lib/i18n.js'
+import { setLang, ensureLang, useLang } from './lib/i18n.js'
 import { setNav } from './lib/nav.js'
 import { useWakeLock } from './lib/wakelock.js'
 import { startFlow } from './sheets.jsx'
@@ -44,6 +44,16 @@ function Shell() {
   useEffect(() => { setNav(navigate) }, [navigate])
   useEffect(() => { applyPrefs(S.theme, S.accent) }, [S.theme, S.accent])
   useEffect(() => { setLang(S.lang || 'en') }, [S.lang])
+  // Self-heal a language that failed to load (offline, a flaky chunk, a module reload):
+  // re-apply it whenever the app returns to the foreground or the network comes back.
+  // Without this, a profile stuck with `lang:'es'` but an empty dict stayed English
+  // forever, because `S.lang` never changed again and nothing retried.
+  useEffect(() => {
+    const reapply = () => { if (document.visibilityState === 'visible') ensureLang(S.lang || 'en') }
+    document.addEventListener('visibilitychange', reapply)
+    window.addEventListener('online', reapply)
+    return () => { document.removeEventListener('visibilitychange', reapply); window.removeEventListener('online', reapply) }
+  }, [S.lang])
   useEffect(() => { document.documentElement.lang = S.lang || 'en' }, [langV, S.lang])
   // every tab/route change starts at the top of the page
   useEffect(() => { window.scrollTo(0, 0) }, [loc.pathname])

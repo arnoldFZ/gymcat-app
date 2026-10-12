@@ -26,12 +26,15 @@ const instrPacks = import.meta.glob('../instr/*.js')
 
 let lang = 'en'
 let dict = {}
+let loaded = false          // dict actually corresponds to `lang` (not just requested)
 let instr = null            // { exId: [steps] } for the current language, null = English
+let gen = 0                 // guards against an older switch finishing after a newer one
 let version = 0
 const subs = new Set()
 const notify = () => { version++; subs.forEach(f => f()) }
 
 export const getLang = () => lang
+export const isLangReady = l => (l || 'en') === lang && loaded
 export const dateLocale = () => DATE_LOCALES[lang] || 'en-GB'
 
 // Translate a source string; {0},{1}… are replaced with args (also on the English fallback).
@@ -43,15 +46,52 @@ export function t(s, ...args) {
 // Instructions for an exercise in the current language (English steps as fallback).
 export const instrFor = ex => (instr && instr[ex.id]) || ex.st || []
 
-export async function setLang(l) {
+let retryTimer = null
+// Load and switch the UI language, then (separately) the instruction pack.
+//
+// Robustness matters here: a profile can have `lang: 'es'` while `S.lang` never
+// changes again, so a single failed load must NOT strand the app in English with
+// Spanish still selected. Two rules:
+//   1. A failed UI dict load keeps `loaded=false` and schedules a bounded retry, so a
+//      later call (or `ensureLang` on focus/online) can recover.
+//   2. The (large) instruction pack is loaded in its OWN try/catch — its failure can
+//      never wipe the UI dict, which used to turn the whole app English.
+export async function setLang(l, attempt = 0) {
   if (!LANGS[l]) l = 'en'
-  if (l === lang && version > 0) return
+  if (l === lang && loaded) return
+  const my = ++gen
   lang = l
-  try {
-    dict = l === 'en' ? {} : (await localePacks['../locales/' + l + '.js']()).default
-    instr = l === 'en' || !INSTR_LANGS.includes(l) ? null : (await instrPacks['../instr/' + l + '.js']()).default
-  } catch (e) { dict = {}; instr = null }
+  loaded = false
+  let d = {}
+  if (l !== 'en') {
+    try { d = (await localePacks['../locales/' + l + '.js']()).default }
+    catch (e) { d = null }
+  }
+  if (my !== gen) return                       // superseded by a newer switch
+  if (d === null) {                            // UI pack failed — fall back, retry later
+    dict = {}
+    notify()
+    if (attempt < 4 && !retryTimer) {
+      retryTimer = setTimeout(() => { retryTimer = null; setLang(l, attempt + 1) }, 1000 * (attempt + 1))
+    }
+    return
+  }
+  dict = d
+  loaded = true
   notify()
+  instr = null
+  if (l !== 'en' && INSTR_LANGS.includes(l)) {
+    try {
+      const m = await instrPacks['../instr/' + l + '.js']()
+      if (my === gen) { instr = m.default; notify() }
+    } catch (e) { /* keep English instructions; the UI stays translated */ }
+  }
+}
+
+// Re-apply the requested language if it isn't actually loaded yet. Callers use this
+// on focus / reconnect; a no-op when everything is fine.
+export function ensureLang(l) {
+  if (!isLangReady(l)) setLang(l)
 }
 
 // Re-renders the subscribing component (and its children) whenever the language changes.

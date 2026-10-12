@@ -86,6 +86,16 @@ Catálogo personal en `S.gam.rewards`: `{ id, name, desc, cost, active }`.
   % de semanas cumplidas, sesiones por semana (últimas 8) y acceso a
   *Rewards & history*.
 
+## Planes sugeridos
+
+`frontend/src/lib/plans.js` define plantillas listas para cargar (una pulsación):
+**Principiante · 3 días**, **Cuerpo completo · 3 días**, **Empuje / Tirón / Pierna ·
+3 días** y **Torso / Pierna · 4 días**. Las de 3 días encajan con la meta semanal de
+GYMPACT. Se abren desde Inicio, Plan y Ajustes (`plansSheet`); al cargar, se añaden
+las rutinas y se fija el horario semanal (las rutinas existentes se conservan). Los
+nombres se traducen al idioma actual en el momento de cargar. Un test valida que
+todos los ids de ejercicio existan en el catálogo y no sean cardio.
+
 ## Backups y compatibilidad
 
 - Export/import de Settings incluye `gam` (el ledger y las recompensas viajan con

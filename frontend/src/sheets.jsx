@@ -8,6 +8,7 @@ import { beep, vibrate } from './lib/sound.js'
 import { t, instrFor, getLang, INSTR_LANGS } from './lib/i18n.js'
 import { nav } from './lib/nav.js'
 import { starterRoutines } from './lib/starter.js'
+import { PLAN_TEMPLATES, buildTemplate } from './lib/plans.js'
 import Media, { Thumb } from './components/Media.jsx'
 import Stepper from './components/Stepper.jsx'
 import Icon from './components/Icon.jsx'
@@ -41,6 +42,44 @@ function ConfirmDialog({ title, message, confirmText, cancelText, danger, onConf
 // Themed replacement for window.confirm — callback-based (no blocking).
 export function confirmSheet(opts) {
   ui().openSheet(close => <ConfirmDialog {...opts} close={close} />, { kind: 'center' })
+}
+
+/* ============================ suggested plans ============================ */
+// Picker for the ready-made training templates (lib/plans.js). Loading a plan adds
+// its routines and sets the week schedule; the user's existing routines are kept.
+export const plansSheet = () => ui().openSheet(close => <PlansPicker close={close} />, { kind: 'center' })
+
+function PlansPicker({ close }) {
+  return <>
+    <h3>{t('Suggested plans')}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('Start with a proven plan — you can edit everything after.')}</div>
+    <div className="list">
+      {PLAN_TEMPLATES.map(tpl => (
+        <div key={tpl.key} className="item" onClick={() => { close(); confirmLoadPlan(tpl) }}>
+          <span className="lrow-i"><Icon name={tpl.glyph} /></span>
+          <div className="grow"><div className="tt">{t(tpl.name)}</div><div className="ss">{t(tpl.note)}</div></div>
+          <Icon name="chevronRight" className="chev" />
+        </div>
+      ))}
+    </div>
+    <div style={{ height: 8 }} />
+  </>
+}
+
+function confirmLoadPlan(tpl) {
+  confirmSheet({
+    title: t('Load {0}?', t(tpl.name)),
+    message: t('This sets your weekly schedule to this plan and adds its routines. Your existing routines are kept.'),
+    confirmText: t('Load'),
+    onConfirm: () => {
+      update(s => {
+        const { routines, week } = buildTemplate(tpl)
+        s.routines.push(...routines)
+        s.week = week
+      })
+      toast(t('Plan loaded'))
+    }
+  })
 }
 
 /* ============================ starter plan ============================ */
