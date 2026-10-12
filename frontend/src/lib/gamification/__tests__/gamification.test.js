@@ -9,7 +9,8 @@ import {
   applyEvents, balance, hasKey, entriesForKey, compensateEvents, pointsEarnedInWeek,
   reconcileSessionEvents, familyNet,
   activeRewards, canRedeem, nextReward, tryRedeem, redemptionHistory,
-  dashboardStats, recentWeeks, complianceRate, cycleProgress, lastSession, pointsByType, targetForWeek
+  dashboardStats, recentWeeks, complianceRate, cycleProgress, lastSession, pointsByType, targetForWeek,
+  bestStreak, achievements
 } from '../index.js'
 
 /* ------------------------------------------------------------------ helpers */
@@ -418,8 +419,29 @@ describe('cycle progress, last session, points breakdown', () => {
   })
 })
 
-/* -------------------------------------------------- backwards compatibility */describe('per-week goal', () => {
-  it('targetForWeek uses the override for that week only', () => {
+/* -------------------------------------------------- backwards compatibility */describe('records and achievements', () => {
+  it('bestStreak finds the longest historical run', () => {
+    const S = emptyS()
+    for (const wk of [0, 1]) for (const w of weekOf(0, wk)) S.workouts.push(w)   // W02, W03
+    for (const wk of [3, 4, 5]) for (const w of weekOf(0, wk)) S.workouts.push(w) // W05, W06, W07
+    expect(bestStreak(S, at('2026-02-02T15:00:00Z'))).toBe(3)
+  })
+
+  it('achievements unlock from real history', () => {
+    const S = emptyS()
+    for (const w of weekOf(0, 0)) S.workouts.push(w)   // 3 sessions → one fulfilled week
+    S.gam.ledger = applyEvents(S.gam.ledger, [{ type: 'session', delta: 100, key: 'k1' }])
+    const byId = Object.fromEntries(achievements(S, at('2026-01-07T15:00:00Z')).map(a => [a.id, a]))
+    expect(byId.sessions1.unlocked).toBe(true)
+    expect(byId.weeks1.unlocked).toBe(true)
+    expect(byId.streak4.unlocked).toBe(false)
+    expect(byId.points1000.unlocked).toBe(false)
+    expect(byId.redeem1.unlocked).toBe(false)
+    expect(byId.sessions1.cur).toBe(3)
+  })
+})
+
+describe('per-week goal', () => {  it('targetForWeek uses the override for that week only', () => {
     const S = { gam: { rules: { weeklyTarget: 3 }, weekTargets: { '2026-W02': 2 } } }
     expect(targetForWeek(S, '2026-W02')).toBe(2)
     expect(targetForWeek(S, '2026-W03')).toBe(3)

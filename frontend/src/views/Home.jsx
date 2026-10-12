@@ -85,6 +85,9 @@ export default function Home() {
             : t('{0}/{1} weeks towards +{2}', gam.cycle.into, gam.cycle.cycleWeeks, gam.cycle.bonus)}</span>
         </div>
       )}
+      {gam.bestStreak > 0 && (
+        <div className="dim small" style={{ marginTop: 6 }}>{t('Best streak: {0} weeks', gam.bestStreak)}</div>
+      )}
       {gam.last && (
         <div className="dim small" style={{ marginTop: 6 }}>
           {t('Last: {0} · {1}', gam.last.name, fmtDate(gam.last.d, true))}

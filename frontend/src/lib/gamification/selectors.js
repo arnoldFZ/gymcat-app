@@ -41,6 +41,49 @@ export function pointsByType(ledger) {
   return out
 }
 
+// The longest run of consecutive fulfilled weeks ever (the personal record).
+export function bestStreak(S, now) {
+  const rules = rulesOf(S)
+  const tz = rules.tz
+  const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, k => targetForWeek(S, k))
+  if (!fulfilled.size) return 0
+  let best = 0
+  for (const wk of fulfilled) {
+    if (fulfilled.has(shiftWeekKey(wk, -1))) continue    // only start counting at a run's first week
+    let n = 0, k = wk
+    while (fulfilled.has(k)) { n++; k = shiftWeekKey(k, 1) }
+    if (n > best) best = n
+  }
+  return best
+}
+
+// Points earned for the whole life of the profile (positive movements only).
+export function lifetimeEarned(ledger) {
+  return entries(ledger).reduce((n, e) => n + Math.max(0, +e.delta || 0), 0)
+}
+
+// Derived achievements — no extra state, computed from what already exists. Each has
+// `kind` + `goal` so the UI can label it (and translate it) however it likes.
+export function achievements(S, now) {
+  const rules = rulesOf(S)
+  const tz = rules.tz
+  const ledger = S && S.gam && S.gam.ledger
+  const sessions = validSessions(S && S.workouts).length
+  const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, k => targetForWeek(S, k)).size
+  const best = bestStreak(S, now)
+  const earned = lifetimeEarned(ledger)
+  const redemptions = entries(ledger).filter(e => e.type === 'redeem').length
+
+  const out = []
+  const push = (kind, goal, cur) => out.push({ id: kind + goal, kind, goal, cur, unlocked: cur >= goal })
+  for (const g of [1, 10, 50, 100]) push('sessions', g, sessions)
+  for (const g of [1, 4, 12, 26]) push('weeks', g, fulfilled)
+  for (const g of [4, 8, 12, 26]) push('streak', g, best)
+  for (const g of [1000, 5000, 10000, 25000]) push('points', g, earned)
+  push('redeem', 1, redemptions)
+  return out
+}
+
 export function dashboardStats(S, now) {
   const rules = rulesOf(S)
   const tz = rules.tz
@@ -59,6 +102,7 @@ export function dashboardStats(S, now) {
     balance: balance(ledger),
     earnedThisWeek: pointsEarnedInWeek(ledger, wk, tz),
     streak: streakOfFulfilled(fulfilled, wk),
+    bestStreak: bestStreak(S, now),
     fulfilledWeeks: fulfilled.size,
     nextReward: nextReward(S),
     cycle: cycleProgress(S, now),

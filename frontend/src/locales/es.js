@@ -739,4 +739,12 @@ export default {
   'Points exported': 'Puntos exportados',
   'not a GymCat points file': 'no es un archivo de puntos de GymCat',
   '{0} movements imported': '{0} movimientos importados',
+  '{0} sessions': '{0} sesiones',
+  '{0} weeks on target': '{0} semanas cumpliendo la meta',
+  '{0}-week streak': 'Racha de {0} semanas',
+  '{0} points earned': '{0} puntos ganados',
+  'First reward redeemed': 'Primera recompensa canjeada',
+  'Achievements': 'Logros',
+  '{0} of {1} unlocked': '{0} de {1} desbloqueados',
+  'Best streak: {0} weeks': 'Mejor racha: {0} semanas',
 }

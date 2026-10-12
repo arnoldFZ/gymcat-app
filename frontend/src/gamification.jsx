@@ -10,7 +10,7 @@ import { confirmSheet } from './sheets.jsx'
 import {
   balance, redeem, canRedeem,
   rewardsCatalog, redemptionHistory,
-  rulesOf, targetForWeek, DEFAULT_RULES, entries, pointsByType
+  rulesOf, targetForWeek, DEFAULT_RULES, entries, pointsByType, achievements
 } from './lib/gamification/index.js'
 
 const ui = () => useUI.getState()
@@ -397,6 +397,48 @@ function WeekGoal({ weekKey, close }) {
     {custom && <><div style={{ height: 8 }} /><Button variant="ghost" className="dim" onClick={clear}>{t('Use the general goal')}</Button></>}
     <div style={{ height: 8 }} />
     <Button variant="ghost" className="dim" onClick={close}>{t('Cancel')}</Button>
+  </>
+}
+
+/* ============================== achievements ============================== */
+
+const ACH_ICON = { sessions: 'dumbbell', weeks: 'calendar', streak: 'flame', points: 'star', redeem: 'medal' }
+function achLabel(a) {
+  switch (a.kind) {
+    case 'sessions': return t('{0} sessions', a.goal)
+    case 'weeks': return t('{0} weeks on target', a.goal)
+    case 'streak': return t('{0}-week streak', a.goal)
+    case 'points': return t('{0} points earned', a.goal)
+    case 'redeem': return t('First reward redeemed')
+    default: return a.id
+  }
+}
+
+export const achievementsSheet = () => ui().openSheet(close => <Achievements close={close} />, { kind: 'center' })
+
+function Achievements({ close }) {
+  const S = useStore(s => s.S)
+  const list = achievements(S)
+  const unlocked = list.filter(a => a.unlocked).length
+  return <>
+    <h3>{t('Achievements')}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('{0} of {1} unlocked', unlocked, list.length)}</div>
+    <div className="list">
+      {list.map(a => (
+        <div key={a.id} className={'item' + (a.unlocked ? '' : ' dim')}>
+          <span className="lrow-i" style={a.unlocked ? { background: 'var(--acc-soft)', color: 'var(--acc)' } : { background: 'var(--surface-2)' }}>
+            <Icon name={a.unlocked ? (ACH_ICON[a.kind] || 'star') : 'lock'} />
+          </span>
+          <div className="grow">
+            <div className="tt">{achLabel(a)}</div>
+            {!a.unlocked && a.goal > 1 && <div className="ss">{Math.min(a.cur, a.goal)} / {a.goal}</div>}
+          </div>
+          {a.unlocked && <Icon name="check" className="accent" />}
+        </div>
+      ))}
+    </div>
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" className="dim" onClick={close}>{t('Close')}</Button>
   </>
 }
 

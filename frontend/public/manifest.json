@@ -8,8 +8,15 @@
   "orientation": "portrait",
   "background_color": "#0c0e12",
   "theme_color": "#0c0e12",
+  "lang": "en",
+  "categories": ["health", "fitness", "lifestyle"],
   "icons": [
     { "src": "icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Start workout", "short_name": "Workout", "url": "./#/workout", "icons": [{ "src": "icon-180.png", "sizes": "180x180", "type": "image/png" }] },
+    { "name": "Weekly plan", "short_name": "Plan", "url": "./#/plan", "icons": [{ "src": "icon-180.png", "sizes": "180x180", "type": "image/png" }] },
+    { "name": "Stats", "short_name": "Stats", "url": "./#/stats", "icons": [{ "src": "icon-180.png", "sizes": "180x180", "type": "image/png" }] }
   ]
 }
