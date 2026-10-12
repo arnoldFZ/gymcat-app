@@ -62,11 +62,49 @@ const T = {
       { name: 'Beginner B', emoji: 'machine', ex: [['1459', 3, 10], ['0289', 3, 10], ['0180', 3, 12], ['0334', 3, 15]] },
       { name: 'Beginner C', emoji: 'machine', ex: [['1760', 3, 10], ['0091', 3, 10], ['2330', 3, 12], ['0201', 3, 12]] }
     ]
+  },
+  fullBody2: {
+    key: 'full-body-2',
+    name: 'Full body · 2 days',
+    note: 'Two sessions a week — the minimum that still moves the needle.',
+    glyph: 'barbell',
+    schedule: [null, 0, null, null, 1, null, null],   // Mon / Thu
+    routines: [
+      { name: 'Full body A', emoji: 'barbell', ex: [['0043', 3, 8], ['0025', 3, 8], ['0027', 3, 10], ['0091', 3, 10], ['0464', 3, 12]] },
+      { name: 'Full body B', emoji: 'dumbbell', ex: [['0085', 3, 8], ['0289', 3, 10], ['2330', 3, 10], ['0334', 3, 15], ['0031', 3, 12]] }
+    ]
+  },
+  bro5: {
+    key: 'bro-5',
+    name: 'Classic split · 5 days',
+    note: 'One muscle group a day, Monday to Friday.',
+    glyph: 'figureStrength',
+    schedule: [null, 0, 1, 2, 3, 4, null],           // Mon–Fri
+    routines: [
+      { name: 'Chest', emoji: 'figureStrength', ex: [['0025', 4, 8], ['0047', 3, 10], ['0289', 3, 10], ['0308', 3, 12], ['0577', 3, 12]] },
+      { name: 'Back', emoji: 'pullup', ex: [['0032', 3, 5], ['2330', 4, 10], ['0027', 4, 10], ['0180', 3, 12], ['0238', 3, 12]] },
+      { name: 'Shoulders', emoji: 'barbell', ex: [['0091', 4, 8], ['0334', 4, 15], ['0203', 3, 15], ['0310', 3, 12]] },
+      { name: 'Legs', emoji: 'legs', ex: [['0043', 4, 8], ['0085', 3, 10], ['0599', 3, 12], ['0585', 3, 12], ['1372', 4, 15]] },
+      { name: 'Arms', emoji: 'arm', ex: [['0031', 4, 10], ['0313', 3, 12], ['0060', 4, 10], ['0201', 3, 12]] }
+    ]
+  },
+  ppl6: {
+    key: 'ppl-6',
+    name: 'Push / Pull / Legs · 6 days',
+    note: 'The split twice a week, Monday to Saturday — only if you recover well.',
+    glyph: 'dumbbell',
+    schedule: [null, 0, 1, 2, 0, 1, 2],              // Mon–Sat: P P L P P L
+    routines: [
+      { name: 'Push', emoji: 'dumbbell', ex: [['0025', 4, 8], ['0047', 3, 10], ['0426', 3, 10], ['0334', 3, 12], ['0241', 3, 12], ['0251', 3, 10]] },
+      { name: 'Pull', emoji: 'pullup', ex: [['2330', 4, 10], ['0027', 4, 8], ['1323', 3, 10], ['0031', 3, 10], ['0313', 3, 12]] },
+      { name: 'Legs', emoji: 'legs', ex: [['0043', 4, 8], ['0085', 3, 10], ['0739', 3, 12], ['0585', 3, 12], ['0586', 3, 12], ['0605', 4, 15]] }
+    ]
   }
 }
 
-// Order shown to the user; the beginner plan first so a new profile starts gently.
-export const PLAN_TEMPLATES = [T.beginner, T.fullBody, T.ppl, T.upperLower]
+// Order shown to the user; the beginner plan first so a new profile starts gently,
+// then increasing number of days (2 → 6) so "more days" is easy to pick.
+export const PLAN_TEMPLATES = [T.beginner, T.fullBody2, T.fullBody, T.ppl, T.upperLower, T.bro5, T.ppl6]
 
 // Build fresh routines (new ids) + the week schedule for a template. Names are
 // translated now, so the stored routines read in the user's current language.

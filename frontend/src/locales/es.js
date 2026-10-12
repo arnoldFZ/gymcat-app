@@ -658,4 +658,12 @@ export default {
   'Beginner A': 'Principiante A',
   'Beginner B': 'Principiante B',
   'Beginner C': 'Principiante C',
+  'Full body · 2 days': 'Cuerpo completo · 2 días',
+  'Two sessions a week — the minimum that still moves the needle.': 'Dos sesiones por semana: el mínimo que aún da resultados.',
+  'Classic split · 5 days': 'Split clásico · 5 días',
+  'One muscle group a day, Monday to Friday.': 'Un grupo muscular por día, de lunes a viernes.',
+  'Push / Pull / Legs · 6 days': 'Empuje / Tirón / Pierna · 6 días',
+  'The split twice a week, Monday to Saturday — only if you recover well.': 'El split dos veces por semana, de lunes a sábado: solo si recuperas bien.',
+  'Back': 'Espalda',
+  'Arms': 'Brazos',
 }

@@ -29,4 +29,9 @@ describe('suggested plans', () => {
       expect(Object.values(week).every(v => ids.has(v))).toBe(true)
     }
   })
+
+  it('offers a spread of day counts (2 through 6) so "more days" is a choice', () => {
+    const counts = new Set(PLAN_TEMPLATES.map(tpl => tpl.schedule.filter(d => d != null).length))
+    for (const n of [2, 3, 4, 5, 6]) expect(counts.has(n), `no ${n}-day plan`).toBe(true)
+  })
 })

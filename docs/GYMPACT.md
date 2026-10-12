@@ -88,13 +88,16 @@ Catálogo personal en `S.gam.rewards`: `{ id, name, desc, cost, active }`.
 
 ## Planes sugeridos
 
-`frontend/src/lib/plans.js` define plantillas listas para cargar (una pulsación):
-**Principiante · 3 días**, **Cuerpo completo · 3 días**, **Empuje / Tirón / Pierna ·
-3 días** y **Torso / Pierna · 4 días**. Las de 3 días encajan con la meta semanal de
+`frontend/src/lib/plans.js` define plantillas listas para cargar (una pulsación), de
+**2 a 6 días** para elegir según el tiempo disponible: **Principiante · 3 días**,
+**Cuerpo completo · 2 días**, **Cuerpo completo · 3 días**, **Empuje / Tirón / Pierna ·
+3 días**, **Torso / Pierna · 4 días**, **Split clásico · 5 días** (un grupo por día) y
+**Empuje / Tirón / Pierna · 6 días**. Las de 3 días encajan con la meta semanal de
 GYMPACT. Se abren desde Inicio, Plan y Ajustes (`plansSheet`); al cargar, se añaden
 las rutinas y se fija el horario semanal (las rutinas existentes se conservan). Los
 nombres se traducen al idioma actual en el momento de cargar. Un test valida que
-todos los ids de ejercicio existan en el catálogo y no sean cardio.
+todos los ids de ejercicio existan en el catálogo y no sean cardio, y que existan
+planes de 2 a 6 días.
 
 ## Backups y compatibilidad
 
