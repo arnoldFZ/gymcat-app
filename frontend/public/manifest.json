@@ -1,6 +1,6 @@
 {
-  "name": "openGym",
-  "short_name": "openGym",
+  "name": "GymCat",
+  "short_name": "GymCat",
   "description": "Personal gym & body weight tracker",
   "start_url": "./",
   "scope": "./",

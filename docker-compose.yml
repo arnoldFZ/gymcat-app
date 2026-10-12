@@ -1,4 +1,4 @@
-name: opengym
+name: gymcat
 
 services:
   # One-time: download the exercise images + GIFs into ./media (skipped if already there).
@@ -22,9 +22,10 @@ services:
     restart: "no"
 
   # Passkey auth + per-user data (Node, no framework).
-  # image: prebuilt (docker compose pull). build: from source (docker compose up --build).
+  # GymCat is a fork: there are no prebuilt GymCat images, so build from source
+  # (docker compose up -d --build). The upstream openGym images are intentionally not pulled.
   api:
-    image: ghcr.io/duartesantos8/opengym-api:latest
+    image: gymcat-api:latest
     build: ./api
     restart: unless-stopped
     env_file: .env
@@ -37,7 +38,7 @@ services:
   # Builds the React frontend (multi-stage) and serves it, proxying /api → api
   # and the exercise media from the shared volume. Single origin for passkeys.
   web:
-    image: ghcr.io/duartesantos8/opengym-web:latest
+    image: gymcat-web:latest
     build:
       context: .
       dockerfile: web/Dockerfile
