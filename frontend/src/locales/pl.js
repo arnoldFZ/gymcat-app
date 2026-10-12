@@ -442,7 +442,7 @@ export default {
   'Use this weekly schedule': 'Użyj tego harmonogramu tygodnia',
   'Replaces your current Mon–Sun assignments.': 'Zastępuje Twój obecny przydział pon–niedz.',
   'Added {0} routines to your plan': 'Dodano {0} planów treningowych do Twojego planu',
-  'this isn’t an GymCat plan file': 'to nie jest plik planu GymCat',
+  'this isn’t a GymCat plan file': 'to nie jest plik planu GymCat',
   'Shared routine': 'Udostępniony plan treningowy',
   'Unknown exercise': 'Nieznane ćwiczenie',
   'Weekly Training Plan': 'Tygodniowy plan treningowy',

@@ -11,6 +11,13 @@ export const DEF = {
   theme: 'dark', accent: 'lime', body: 'male', targetW: null,
   bodyweight: [], routines: [], week: {}, dayPlan: {},
   exWeights: {}, workouts: [], active: null, customEx: [], gifSize: 'full',
+  // GYMPACT gamification state. Kept inside S so it syncs and backs up with
+  // everything else. Optional/retrocompatible: old states simply fall back to
+  // these empty values on read (loadState overlays the saved object over DEF).
+  //   rules   — optional overrides of the scoring defaults (see gamification/rules.js)
+  //   ledger  — append-only, idempotent list of point movements
+  //   rewards — the user's own reward catalog
+  gam: { rules: null, ledger: [], rewards: [] },
   // effort: which per-set effort scale is logged — 'none' | 'rir' | 'rpe'. null, not 'none', so
   // that a profile which never chose (loaded state is overlaid on DEF, on every path: local,
   // server pull, backup import) still falls back to the `showRir` boolean this replaced and

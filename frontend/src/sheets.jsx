@@ -20,6 +20,7 @@ import { buildPlanBundle, parsePlan, mergePlan, printPlan } from './lib/plan-sha
 import { estimate1RM, best1RM, is1RMRecord, REP_CAP } from './lib/onerm.js'
 import { nextPrescription, applyPrescription, policyFor, defaultIncrement, POLICIES_FOR, POLICY_NAME, POLICY_DESC, MAX_BW_SETS } from './lib/progression.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
+import { eventsForFinishedWorkout, applyEvents, compensateEvents, compensationForWorkout } from './lib/gamification/index.js'
 
 const S = () => useStore.getState().S
 const update = (...a) => useStore.getState().update(...a)
@@ -759,7 +760,14 @@ function WorkoutDetail({ w, close }) {
           <div className="ss">{e.sets.filter(s => s.done).map(s => setLabel(e.id, s, e.target)).join('  ·  ') || t('no sets')}</div></div>
       </div>
     })}
-    <Button variant="danger" onClick={() => confirmSheet({ title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true, onConfirm: () => { update(s => { s.workouts = s.workouts.filter(x => x.id !== w.id) }); close(); toast(t('Workout deleted')) } })}>{t('Delete workout')}</Button>
+    <Button variant="danger" onClick={() => confirmSheet({ title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true, onConfirm: () => { update(s => {
+      s.workouts = s.workouts.filter(x => x.id !== w.id)
+      // GYMPACT: deleting a session never erases its ledger history — it appends a
+      // compensating movement that zeroes the points it awarded (weekly/cycle
+      // bonuses already earned stand; see docs/GYMPACT_AUDIT.md §6).
+      if (!s.gam) s.gam = { ledger: [], rewards: [] }
+      s.gam.ledger = applyEvents(s.gam.ledger, compensateEvents(s.gam.ledger, compensationForWorkout(w)))
+    }); close(); toast(t('Workout deleted')) } })}>{t('Delete workout')}</Button>
   </>
 }
 export const workoutDetailSheet = w => ui().openSheet(close => <WorkoutDetail w={w} close={close} />)
@@ -962,6 +970,12 @@ function doFinishWorkout() {
     })
     s.workouts.push(w)
     s.active = null
+    // GYMPACT: score the finished session through the pure domain. The helper stays
+    // free of points logic — it just asks the domain what events this session
+    // produced and appends them. Idempotent by key, so a replayed finish can't
+    // double the points.
+    if (!s.gam) s.gam = { ledger: [], rewards: [] }
+    s.gam.ledger = applyEvents(s.gam.ledger, eventsForFinishedWorkout(s, w), w.end)
   })
   useUI.getState().stopRest()
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)
