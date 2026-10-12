@@ -5,12 +5,14 @@
 // decided by another (`speechLangs`), so both are unit-testable; only `speak`/
 // `stopSpeaking` touch the browser.
 //
-// iOS Safari only allows speechSynthesis from a user gesture, which is exactly how
-// it is used here (a button tap), and it needs the language tag set on the utterance
-// to pick a matching system voice.
+// iOS Safari only allows speechSynthesis from a user gesture (a tap), which is how
+// it is used here. Two iOS-specific rules keep it audible:
+//   · set only `utterance.lang` — forcing a `voice` that isn't actually installed
+//     (Apple lists many that must be downloaded) produces SILENCE;
+//   · call `resume()` after `speak()`, because iOS often starts paused.
 
-// Voice language for each supported UI language. Spanish defaults to es-ES; any
-// es-* voice will do when es-ES isn't installed.
+// Voice language for each supported UI language. Spanish defaults to es-ES; the
+// system falls back to any es-* voice if es-ES isn't present.
 const SPEECH_TAGS = { en: 'en-US', es: 'es-ES' }
 
 export function isSpeechSupported() {
@@ -40,6 +42,8 @@ export function speechText(name, steps) {
   return head + sep + body
 }
 
+// Cache the voice list for diagnostics (the Settings "test" shows the count). We do
+// NOT pick a specific voice to speak with — see `speak`.
 let voices = []
 function refreshVoices() {
   if (!isSpeechSupported()) return
@@ -47,37 +51,44 @@ function refreshVoices() {
 }
 if (isSpeechSupported()) {
   refreshVoices()
-  // Voices arrive asynchronously on most browsers; cache them when they do.
   try { window.speechSynthesis.addEventListener?.('voiceschanged', refreshVoices) } catch { /* */ }
 }
+export const voiceCount = () => voices.length
 
-function pickVoice(tag) {
-  if (!voices.length) refreshVoices()
-  const t = String(tag).toLowerCase()
-  const base = t.split('-')[0]
-  return voices.find(v => (v.lang || '').toLowerCase() === t)
-    || voices.find(v => (v.lang || '').toLowerCase().startsWith(base))
-    || null
-}
-
+let current = null
 export function stopSpeaking() {
   if (isSpeechSupported()) { try { window.speechSynthesis.cancel() } catch { /* */ } }
+  current = null
 }
 
-// Speak `text` with the voice for `tag`. Returns false when unsupported/empty so the
-// caller can fall back to a toast or nothing.
+// Speak `text` with the voice for `tag`. Returns false when unsupported/empty.
+// Must be invoked from a user gesture on iOS.
 export function speak(text, tag) {
   if (!isSpeechSupported() || !text) return false
   const synth = window.speechSynthesis
   try {
-    synth.cancel()                     // one voice at a time
+    if (synth.speaking || synth.pending) synth.cancel()
     const u = new window.SpeechSynthesisUtterance(text)
     u.lang = tag || 'en-US'
-    const v = pickVoice(u.lang)
-    if (v) u.voice = v
-    u.rate = 0.95
+    u.rate = 1
     u.pitch = 1
+    u.volume = 1
+    u.onend = () => { if (current === u) current = null }
+    u.onerror = () => { if (current === u) current = null }
+    // Hold a reference: iOS Safari can garbage-collect a detached utterance and then
+    // simply never plays it. This is the classic "nothing happens" speech bug.
+    current = u
     synth.speak(u)
+    if (synth.paused) synth.resume()
     return true
   } catch { return false }
+}
+
+// A short sample in the chosen language, for the Settings "Test" button.
+export function speakTest(S) {
+  const { code, tag } = speechLangs(S)
+  const sample = code === 'es'
+    ? 'Así suena la voz de tus ejercicios.'
+    : 'This is your exercise voice.'
+  return speak(sample, tag)
 }

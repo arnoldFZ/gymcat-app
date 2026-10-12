@@ -718,4 +718,7 @@ export default {
   'not a GymCat rewards file': 'no es un archivo de recompensas de GymCat',
   'pts': 'pts',
   '{0} rewards imported': '{0} recompensas importadas',
+  'Test': 'Probar',
+  'Read on open': 'Leer al abrir',
+  'Speak the exercise automatically when you open it.': 'Lee el ejercicio automáticamente al abrirlo.',
 }

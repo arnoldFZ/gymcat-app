@@ -37,6 +37,17 @@ export function speakExercise(ex) {
   if (!speak(speechText(ex.n, instrFor(ex)), tag)) toast(t('Spoken voice is not available on this device'))
 }
 
+// Auto-read when an exercise is opened (only when enabled). Called from the tap that
+// opens the detail, so it stays inside the user gesture iOS requires.
+export function maybeSpeakExercise(ex) {
+  const st = S()
+  if (st.autoSpeak === false || st.speakLang === 'off') return
+  speakExercise(ex)
+}
+export function maybeSpeakExerciseId(id) {
+  maybeSpeakExercise(EXIDX[id] || { id, n: id, st: [] })
+}
+
 /* ============================ custom confirm dialog ============================ */
 function ConfirmDialog({ title, message, confirmText, cancelText, danger, onConfirm, close }) {
   return <div style={{ textAlign: 'center', padding: '4px 0' }}>

@@ -9,7 +9,7 @@ import { beep, vibrate } from '../lib/sound.js'
 import { t } from '../lib/i18n.js'
 import { api } from '../lib/api.js'
 import Media from '../components/Media.jsx'
-import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, speakExercise } from '../sheets.jsx'
+import { startFlow, exercisePicker, exConfigSheet, exerciseDetailSheet, topWeightSheet, finishWorkout, workoutCompleteSheet, confirmSheet, speakExercise, maybeSpeakExercise, maybeSpeakExerciseId } from '../sheets.jsx'
 import { isSpeechSupported } from '../lib/speech.js'
 import Icon from '../components/Icon.jsx'
 import { Button, Check, NumberField } from '../components/ui.jsx'
@@ -117,7 +117,7 @@ function ExerciseBlock({ entryIdx, compact, onToggle, onField, onAddSet, onRemov
         {isSpeechSupported() && S.speakLang !== 'off' && (
           <button className="iconbtn" aria-label={t('Listen')} title={t('Listen')} onClick={() => speakExercise(ex)}><Icon name="speaker" /></button>
         )}
-        <button className="iconbtn" aria-label={t('Details')} onClick={() => exerciseDetailSheet(ex)}><Icon name="info" /></button>
+        <button className="iconbtn" aria-label={t('Details')} onClick={() => { maybeSpeakExercise(ex); exerciseDetailSheet(ex) }}><Icon name="info" /></button>
       </div>
     </div>
     <div className="row" style={{ gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
@@ -283,8 +283,8 @@ function ActiveWorkout() {
 
     <div style={{ height: 12 }} />
     <div className="row">
-      <Button icon="chevronLeft" disabled={unitIdx <= 0} onClick={() => update(s => { s.active.cur = units[unitIdx - 1][0] })}>{t('Prev')}</Button>
-      <Button trailingIcon="chevronRight" disabled={unitIdx < 0 || unitIdx >= units.length - 1} onClick={() => update(s => { s.active.cur = units[unitIdx + 1][0] })}>{t('Next')}</Button>
+      <Button icon="chevronLeft" disabled={unitIdx <= 0} onClick={() => { update(s => { s.active.cur = units[unitIdx - 1][0] }); maybeSpeakExerciseId(A.entries[units[unitIdx - 1][0]].id) }}>{t('Prev')}</Button>
+      <Button trailingIcon="chevronRight" disabled={unitIdx < 0 || unitIdx >= units.length - 1} onClick={() => { update(s => { s.active.cur = units[unitIdx + 1][0] }); maybeSpeakExerciseId(A.entries[units[unitIdx + 1][0]].id) }}>{t('Next')}</Button>
     </div>
     <div style={{ height: 10 }} />
     <Button onClick={() => exercisePicker(ex => exConfigSheet(ex, null, cfg => update(s => {

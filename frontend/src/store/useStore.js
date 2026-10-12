@@ -25,6 +25,8 @@ export const DEF = {
   reminder: { on: false, time: '08:00', tz: null }, effort: null,
   // GYMPACT spoken instructions: 'app' follows the UI language, or force 'en'/'es'.
   speakLang: 'app',
+  // Read the exercise aloud automatically when it is opened.
+  autoSpeak: true,
   // Nudge (toast + system notification) when one session is left to hit the week.
   gamNudge: true
 }

@@ -5,7 +5,7 @@ import { bestWeightFor } from '../lib/history.js'
 import { fmtNum } from '../lib/format.js'
 import { t } from '../lib/i18n.js'
 import { Thumb } from '../components/Media.jsx'
-import { exerciseDetailSheet, addToRoutineSheet, customExSheet } from '../sheets.jsx'
+import { exerciseDetailSheet, addToRoutineSheet, customExSheet, maybeSpeakExercise } from '../sheets.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 
@@ -41,7 +41,7 @@ export default function Library() {
       </div>
       {f.slice(0, shown).map(e => {
         const best = bestWeightFor(S, e.id)
-        return <div key={e.id} className="item" onClick={() => exerciseDetailSheet(e)}>
+        return <div key={e.id} className="item" onClick={() => { maybeSpeakExercise(e); exerciseDetailSheet(e) }}>
           <Thumb ex={e} />
           <div className="grow"><div className="tt capitalize">{e.n}</div><div className="ss capitalize">{t(e.tg || e.bp)} · {t(e.eq)}</div></div>
           {best > 0 && <span className="tag acc">{fmtNum(best)}</span>}

@@ -13,7 +13,7 @@ import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
 import { plansSheet, confirmSheet, importFromApp } from '../sheets.jsx'
 import { rewardsSheet, rulesSheet, ledgerSheet } from '../gamification.jsx'
 import { rulesOf } from '../lib/gamification/index.js'
-import { isSpeechSupported } from '../lib/speech.js'
+import { isSpeechSupported, speakTest } from '../lib/speech.js'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
 
@@ -154,9 +154,15 @@ export default function Settings() {
           value={effortOf(S)} onChange={v => update(s => { s.effort = v; delete s.showRir })} />
       </Row>
       <Row icon="speaker" iconTint="var(--blue)" title={t('Exercise voice')} subtitle={isSpeechSupported() ? t('Read instructions aloud.') : t('Not supported in this browser.')}>
-        <Segmented className="seg-inline"
-          options={[{ value: 'off', label: t('Off') }, { value: 'app', label: t('Auto') }, { value: 'en', label: 'EN' }, { value: 'es', label: 'ES' }]}
-          value={S.speakLang || 'app'} onChange={v => update(s => { s.speakLang = v })} />
+        <div className="row" style={{ gap: 8 }}>
+          {isSpeechSupported() && <Button size="sm" icon="play" onClick={() => speakTest(S)}>{t('Test')}</Button>}
+          <Segmented className="seg-inline"
+            options={[{ value: 'off', label: t('Off') }, { value: 'app', label: t('Auto') }, { value: 'en', label: 'EN' }, { value: 'es', label: 'ES' }]}
+            value={S.speakLang || 'app'} onChange={v => update(s => { s.speakLang = v })} />
+        </div>
+      </Row>
+      <Row icon="speakerOff" iconTint="var(--label-2)" title={t('Read on open')} subtitle={t('Speak the exercise automatically when you open it.')}>
+        <Switch checked={S.autoSpeak !== false} onChange={v => update(s => { s.autoSpeak = v })} />
       </Row>
     </Section>
 
