@@ -1,7 +1,7 @@
 // GYMPACT — read-only selectors that turn raw state into what the UI shows.
 // Pure and deterministic given `now`; the views never compute points themselves.
 
-import { rulesOf } from './rules.js'
+import { rulesOf, targetForWeek } from './rules.js'
 import { currentWeekKey, countInWeek, fulfilledWeekKeys, validSessions } from './weekly-goals.js'
 import { streakOfFulfilled, shiftWeekKey } from './streaks.js'
 import { balance, pointsEarnedInWeek, entries } from './ledger.js'
@@ -13,7 +13,7 @@ import { nextReward } from './rewards.js'
 export function cycleProgress(S, now) {
   const rules = rulesOf(S)
   const tz = rules.tz
-  const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, rules.weeklyTarget)
+  const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, k => targetForWeek(S, k))
   const streak = streakOfFulfilled(fulfilled, currentWeekKey(tz, now))
   const into = streak > 0 ? ((streak - 1) % rules.cycleWeeks) + 1 : 0
   return {
@@ -45,15 +45,17 @@ export function dashboardStats(S, now) {
   const rules = rulesOf(S)
   const tz = rules.tz
   const wk = currentWeekKey(tz, now)
+  const target = targetForWeek(S, wk)
   const sessions = countInWeek(S && S.workouts, wk, tz)
   const ledger = S && S.gam && S.gam.ledger
-  const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, rules.weeklyTarget)
+  const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, k => targetForWeek(S, k))
   return {
     weekKey: wk,
     sessions,
-    target: rules.weeklyTarget,
-    goalMet: sessions >= rules.weeklyTarget,
-    remainingToGoal: Math.max(0, rules.weeklyTarget - sessions),
+    target,
+    goalMet: sessions >= target,
+    remainingToGoal: Math.max(0, target - sessions),
+    customGoal: target !== rules.weeklyTarget,
     balance: balance(ledger),
     earnedThisWeek: pointsEarnedInWeek(ledger, wk, tz),
     streak: streakOfFulfilled(fulfilled, wk),
@@ -75,7 +77,7 @@ export function recentWeeks(S, n = 8, now) {
   const out = []
   for (let i = 0; i < n; i++) {
     const count = countInWeek(S && S.workouts, k, tz)
-    out.unshift({ weekKey: k, count, fulfilled: count >= rules.weeklyTarget, points: pointsEarnedInWeek(S && S.gam && S.gam.ledger, k, tz) })
+    out.unshift({ weekKey: k, count, fulfilled: count >= targetForWeek(S, k), points: pointsEarnedInWeek(S && S.gam && S.gam.ledger, k, tz) })
     k = shiftWeekKey(k, -1)
   }
   return out
@@ -91,7 +93,7 @@ export function complianceRate(S, n = 8, now) {
   let done = 0, met = 0
   for (let i = 0; i < n; i++) {
     done++
-    if (countInWeek(S && S.workouts, k, tz) >= rules.weeklyTarget) met++
+    if (countInWeek(S && S.workouts, k, tz) >= targetForWeek(S, k)) met++
     k = shiftWeekKey(k, -1)
   }
   return done ? { met, done, rate: met / done } : null

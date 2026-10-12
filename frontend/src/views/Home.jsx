@@ -10,7 +10,7 @@ import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import { glyphOf } from '../lib/glyphs.js'
 import { dashboardStats } from '../lib/gamification/index.js'
-import { rewardsSheet } from '../gamification.jsx'
+import { rewardsSheet, weekGoalSheet } from '../gamification.jsx'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
@@ -63,9 +63,9 @@ export default function Home() {
       <div className="row" style={{ gap: 8, alignItems: 'baseline' }}>
         <div className="big">{gam.sessions}<span className="muted" style={{ fontSize: '1.05rem', fontWeight: 500 }}>{' / ' + gam.target}</span></div>
         <span className="small muted">{t('valid sessions')}</span>
-        {gam.goalMet
-          ? <span className="tag acc" style={{ marginLeft: 'auto' }}>{t('Goal met!')}</span>
-          : <span className="dim small" style={{ marginLeft: 'auto' }}>{t('{0} to go', gam.remainingToGoal)}</span>}
+        <Button size="sm" icon="target" style={{ marginLeft: 'auto' }} onClick={() => weekGoalSheet(gam.weekKey)}>
+          {gam.goalMet ? t('Goal met!') : t('{0} to go', gam.remainingToGoal)}
+        </Button>
       </div>
       <div className="gbar" role="progressbar" aria-valuenow={gam.sessions} aria-valuemin="0" aria-valuemax={gam.target} aria-label={t('Weekly goal progress')}>
         <div className="gbar-fill" style={{ width: goalPct + '%' }} />

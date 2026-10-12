@@ -7,7 +7,7 @@
 // both compute "session X happened" produce the same key, so the second one is a
 // no-op instead of a duplicate 100 points.
 
-import { rulesOf, isValidSession } from './rules.js'
+import { rulesOf, isValidSession, targetForWeek } from './rules.js'
 import {
   instantOf, sessionWeekKey, fulfilledWeekKeys
 } from './weekly-goals.js'
@@ -61,7 +61,7 @@ export function eventsForFinishedWorkout(S, workout) {
   const out = [sessionEvent(workout, rules)]
 
   const wk = sessionWeekKey(workout, tz)
-  const fulfilled = fulfilledWeekKeys(S.workouts, tz, rules.weeklyTarget)
+  const fulfilled = fulfilledWeekKeys(S.workouts, tz, k => targetForWeek(S, k))
   if (fulfilled.has(wk)) {
     out.push(weekBonusEvent(wk, rules))
     const run = consecutiveEndingAt(fulfilled, wk)

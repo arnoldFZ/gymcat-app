@@ -5,12 +5,12 @@ import { t } from './lib/i18n.js'
 import { fmtDate, uid } from './lib/format.js'
 import { MOBILE, shareExport } from './lib/mobile.js'
 import Icon from './components/Icon.jsx'
-import { Button, Switch, TextField, NumberField, SelectRow } from './components/ui.jsx'
+import { Button, Switch, TextField, NumberField, SelectRow, Stepper } from './components/ui.jsx'
 import { confirmSheet } from './sheets.jsx'
 import {
   balance, redeem, canRedeem,
   rewardsCatalog, redemptionHistory,
-  rulesOf, DEFAULT_RULES, entries, pointsByType
+  rulesOf, targetForWeek, DEFAULT_RULES, entries, pointsByType
 } from './lib/gamification/index.js'
 
 const ui = () => useUI.getState()
@@ -252,6 +252,50 @@ function importRewardsFile(file) {
   rd.readAsText(file)
 }
 
+/* ============================== points import / export ============================== */
+
+async function exportLedger(ledger) {
+  const day = new Date().toISOString().slice(0, 10)
+  const json = JSON.stringify({ gymcat_ledger: 1, exported: day, ledger }, null, 2)
+  const name = 'gymcat-points-' + day + '.json'
+  if (MOBILE) {
+    try { await shareExport(json, name); toast(t('Points exported')) } catch { /* dismissed */ }
+    return
+  }
+  try {
+    const blob = new Blob([json], { type: 'application/json' })
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href)
+    toast(t('Points exported'))
+  } catch { toast(t('Export failed')) }
+}
+
+// Merge by idempotency key: the ledger is append-only and keyed, so importing an
+// overlapping file can only ADD missing movements, never duplicate points.
+function importLedgerFile(file) {
+  const rd = new FileReader()
+  rd.onload = () => {
+    try {
+      const data = JSON.parse(rd.result)
+      const list = Array.isArray(data) ? data : (data && data.ledger)
+      if (!Array.isArray(list)) throw new Error(t('not a GymCat points file'))
+      let added = 0
+      editGam(g => {
+        const have = new Set((g.ledger || []).map(e => e.key))
+        for (const e of list) {
+          if (!e || !e.key || have.has(e.key)) continue
+          g.ledger.push({
+            id: e.id || uid(), type: e.type || 'movement', delta: +e.delta || 0, key: e.key,
+            ref: e.ref || {}, meta: e.meta || {}, date: e.date || new Date().toISOString()
+          })
+          have.add(e.key); added++
+        }
+      })
+      toast(t('{0} movements imported', added))
+    } catch (e) { toast(t('Import failed: {0}', e.message)) }
+  }
+  rd.readAsText(file)
+}
+
 /* ============================== scoring rules ============================== */
 
 const TZ_OPTIONS = [
@@ -326,6 +370,36 @@ function RulesEdit({ close }) {
   </>
 }
 
+/* ============================== per-week goal ============================== */
+
+// Override the weekly target for a single week, straight from the dashboard.
+export const weekGoalSheet = weekKey => ui().openSheet(close => <WeekGoal weekKey={weekKey} close={close} />, { kind: 'center' })
+
+function WeekGoal({ weekKey, close }) {
+  const S = useStore(s => s.S)
+  const base = rulesOf(S).weeklyTarget
+  const [n, setN] = useState(targetForWeek(S, weekKey))
+  const custom = targetForWeek(S, weekKey) !== base
+  const save = () => {
+    editGam(g => { g.weekTargets = { ...(g.weekTargets || {}), [weekKey]: Math.max(1, Math.round(+n || 1)) } })
+    close(); toast(t('Goal updated'))
+  }
+  const clear = () => {
+    editGam(g => { if (g.weekTargets) delete g.weekTargets[weekKey] })
+    close(); toast(t('Using your general goal'))
+  }
+  return <>
+    <h3>{t('This week’s goal')}</h3>
+    <div className="muted small" style={{ marginBottom: 10 }}>{t('General goal: {0} sessions.', base)}</div>
+    <Stepper value={n} step={1} decimal={false} label={t('Sessions')} unit={t('this week')} onChange={setN} />
+    <div style={{ height: 12 }} />
+    <Button variant="primary" icon="check" onClick={save}>{t('Save')}</Button>
+    {custom && <><div style={{ height: 8 }} /><Button variant="ghost" className="dim" onClick={clear}>{t('Use the general goal')}</Button></>}
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" className="dim" onClick={close}>{t('Cancel')}</Button>
+  </>
+}
+
 /* ============================== points history ============================== */
 
 const MOVE_ICON = { session: 'dumbbell', week_bonus: 'flame', cycle_bonus: 'crown', redeem: 'medal', compensation: 'reset' }
@@ -350,6 +424,7 @@ export const ledgerSheet = () => ui().openSheet(close => <LedgerSheet close={clo
 
 function LedgerSheet({ close }) {
   const S = useStore(s => s.S)
+  const fileRef = useRef(null)
   const ledger = S.gam && S.gam.ledger
   const rows = entries(ledger).slice().reverse()
   const byt = pointsByType(ledger)
@@ -379,6 +454,13 @@ function LedgerSheet({ close }) {
       </div>
     ) : <div className="muted small">{t('No movements yet.')}</div>}
 
+    <div style={{ height: 10 }} />
+    <div className="row" style={{ gap: 8 }}>
+      <Button icon="download" style={{ flex: 1 }} onClick={() => exportLedger(ledger)}>{t('Export')}</Button>
+      <Button icon="upload" style={{ flex: 1 }} onClick={() => fileRef.current?.click()}>{t('Import')}</Button>
+    </div>
+    <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: 'none' }}
+      onChange={e => { const f = e.target.files[0]; e.target.value = ''; if (f) importLedgerFile(f) }} />
     <div style={{ height: 10 }} />
     <Button variant="ghost" className="dim" onClick={close}>{t('Close')}</Button>
   </>

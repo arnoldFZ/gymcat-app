@@ -9,7 +9,7 @@ import {
   applyEvents, balance, hasKey, entriesForKey, compensateEvents, pointsEarnedInWeek,
   reconcileSessionEvents, familyNet,
   activeRewards, canRedeem, nextReward, tryRedeem, redemptionHistory,
-  dashboardStats, recentWeeks, complianceRate, cycleProgress, lastSession, pointsByType
+  dashboardStats, recentWeeks, complianceRate, cycleProgress, lastSession, pointsByType, targetForWeek
 } from '../index.js'
 
 /* ------------------------------------------------------------------ helpers */
@@ -418,7 +418,32 @@ describe('cycle progress, last session, points breakdown', () => {
   })
 })
 
-/* -------------------------------------------------- backwards compatibility */describe('profiles written before the feature', () => {
+/* -------------------------------------------------- backwards compatibility */describe('per-week goal', () => {
+  it('targetForWeek uses the override for that week only', () => {
+    const S = { gam: { rules: { weeklyTarget: 3 }, weekTargets: { '2026-W02': 2 } } }
+    expect(targetForWeek(S, '2026-W02')).toBe(2)
+    expect(targetForWeek(S, '2026-W03')).toBe(3)
+    expect(targetForWeek({}, '2026-W02')).toBe(3)
+  })
+
+  it('decides the weekly bonus using the per-week target', () => {
+    const S = { workouts: [], gam: { rules: { weeklyTarget: 3 }, weekTargets: { '2026-W02': 2 }, ledger: [], rewards: [] } }
+    finish(S, wAt('a', at('2026-01-05T15:00:00Z'), '2026-01-05'))
+    expect(hasKey(S.gam.ledger, weekBonusKey('2026-W02'))).toBe(false)
+    finish(S, wAt('b', at('2026-01-06T15:00:00Z'), '2026-01-06'))
+    expect(hasKey(S.gam.ledger, weekBonusKey('2026-W02'))).toBe(true)
+  })
+
+  it('dashboardStats reports the current week’s target', () => {
+    const S = { workouts: [], gam: { rules: { weeklyTarget: 3 }, weekTargets: { '2026-W02': 2 }, ledger: [], rewards: [] } }
+    const d = dashboardStats(S, at('2026-01-06T15:00:00Z'))
+    expect(d.target).toBe(2)
+    expect(d.customGoal).toBe(true)
+    expect(d.remainingToGoal).toBe(2)
+  })
+})
+
+describe('profiles written before the feature', () => {
   it('works with no `gam` key and with a partially-set one', () => {
     const legacy = { workouts: [], routines: [], bodyweight: [] }   // pre-GYMPACT state
     const d = dashboardStats(legacy, at('2026-01-06T15:00:00Z'))

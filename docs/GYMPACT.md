@@ -22,6 +22,9 @@ recompensas* → *Reglas de puntuación* (sesiones/semana, puntos por sesión, b
 semanal, semanas por ciclo, bonus de ciclo y zona horaria de la semana), con opción
 de *Restablecer valores por defecto*. Los cambios solo afectan a puntos futuros: cada
 movimiento guarda la `ruleVersion` con la que se calculó.
+Además, desde el **dashboard** puedes editar la **meta de una semana concreta**
+(una semana ligera), que se guarda en `S.gam.weekTargets[weekKey]` y solo afecta a esa
+semana (incluido cuándo se concede el bonus semanal).
 
 ## Qué es una "sesión válida"
 
@@ -99,6 +102,9 @@ Catálogo personal en `S.gam.rewards`: `{ id, name, desc, cost, active }`.
 - **Aviso semanal** (opt-in, Ajustes): al finalizar una sesión, si queda **1** para
   cumplir la meta, avisa con un *toast* y, si hay permiso de notificaciones, con una
   **notificación local** (service worker). No requiere backend.
+- **Push con la app cerrada**: con el backend en marcha y notificaciones activadas, el
+  servidor envía *"te falta 1 sesión para cumplir la semana"* a la hora del recordatorio
+  (una vez al día, solo si queda exactamente 1). Reutiliza la zona y hora del recordatorio.
 
 ## Registro auditable (Points history)
 
@@ -106,7 +112,9 @@ Ajustes → *Puntos y recompensas* → *Historial de puntos* (y desde Stats) mue
 cada movimiento del ledger: sesión, bonus semanal/de ciclo, canje y ajustes por
 corrección/borrado, con fecha, referencia y delta. Arriba resume el saldo y el
 desglose ("X en sesiones · Y en bonus · Z gastados"). Nada se borra: las
-correcciones y borrados aparecen como movimientos, no desaparecen.
+correcciones y borrados aparecen como movimientos, no desaparecen. Se puede
+**exportar** el historial a un archivo (`gymcat-points-*.json`) e **importarlo**
+(fusión por clave idempotente: solo añade movimientos que falten, nunca duplica).
 
 ## Planes sugeridos
 

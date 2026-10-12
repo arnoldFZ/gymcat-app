@@ -144,6 +144,55 @@ setInterval(() => {
 // interval could sit on your target minute for up to 59s before noticing. 10s caps that at ~9s.
 }, 10000).unref();
 
+/* ---------- GYMPACT weekly nudge (server-side) ---------- */
+// "One session left to hit this week's goal", delivered even with the app closed.
+// Reuses the reminder's chosen time + timezone (this only makes sense for someone who
+// already opted into notifications and set a time), fires at most once a day, and only
+// when the current week is exactly ONE session short of its target. Week logic mirrors
+// frontend/src/lib/gamification (ISO week in the profile's zone).
+function isoWeekKeyOfDate(iso) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const day = (dt.getUTCDay() + 6) % 7;
+  dt.setUTCDate(dt.getUTCDate() - day + 3);
+  const jan4 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 4));
+  const week = 1 + Math.round(((dt - jan4) / 86400000 - 3 + ((jan4.getUTCDay() + 6) % 7)) / 7);
+  return dt.getUTCFullYear() + '-W' + String(week).padStart(2, '0');
+}
+function weekKeyFromInstant(ms, tz) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(ms));
+    const g = k => parts.find(p => p.type === k).value;
+    return isoWeekKeyOfDate(`${g('year')}-${g('month')}-${g('day')}`);
+  } catch { return null; }
+}
+const workoutInstant = w => (w && (w.end || w.start)) || Date.parse(((w && w.d) || '1970-01-01') + 'T12:00:00Z');
+const isValidSession = w => Array.isArray(w && w.entries) && w.entries.some(e => Array.isArray(e.sets) && e.sets.some(s => s && s.done));
+
+setInterval(() => {
+  for (const user of db.users) {
+    if (!db.subs.some(s => s.userId === user.id)) continue;   // nothing to notify
+    let S;
+    try { S = readState(user.id); } catch { S = null; }
+    if (!S || S.gamNudge === false) continue;
+    const tz = (S.gam && S.gam.rules && S.gam.rules.tz) || (S.reminder && S.reminder.tz) || 'America/Lima';
+    const now = userNow(tz);
+    if (!now) continue;
+    // Deliver at the profile's reminder time so it never pings at a random hour.
+    if (!S.reminder || !S.reminder.on || S.reminder.time !== now.hhmm) continue;
+    if (user.lastNudge === now.date) continue;
+    const week = weekKeyFromInstant(Date.now(), tz);
+    const target = +((S.gam && S.gam.weekTargets && S.gam.weekTargets[week]) || (S.gam && S.gam.rules && S.gam.rules.weeklyTarget) || 3);
+    const count = (S.workouts || []).filter(isValidSession).filter(w => weekKeyFromInstant(workoutInstant(w), tz) === week).length;
+    if (count !== target - 1) continue;   // already done, or more than one to go
+    user.lastNudge = now.date;
+    saveDb();
+    const body = S.lang === 'es' ? 'Te falta 1 sesión para cumplir la semana 💪' : 'One session left to hit this week’s goal 💪';
+    console.log('weekly nudge firing', user.id, week, count + '/' + target);
+    sendPush(user.id, { title: 'GYMPACT', body, tag: 'week-nudge' });
+  }
+}, 10000).unref();
+
 /* ---------- sessions (signed cookie) ---------- */
 function sign(payload) {
   const mac = crypto.createHmac('sha256', SECRET).update(payload).digest('base64url');

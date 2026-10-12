@@ -730,4 +730,13 @@ export default {
   'Voice': 'Voz',
   'Automatic': 'Automática',
   'online': 'en línea',
+  'This week’s goal': 'Meta de esta semana',
+  'General goal: {0} sessions.': 'Meta general: {0} sesiones.',
+  'Sessions': 'Sesiones',
+  'Goal updated': 'Meta actualizada',
+  'Using your general goal': 'Usando tu meta general',
+  'Use the general goal': 'Usar la meta general',
+  'Points exported': 'Puntos exportados',
+  'not a GymCat points file': 'no es un archivo de puntos de GymCat',
+  '{0} movements imported': '{0} movimientos importados',
 }

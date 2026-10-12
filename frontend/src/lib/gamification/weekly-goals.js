@@ -83,14 +83,16 @@ export function currentWeekKey(tz, now) {
   return weekKeyOf(now == null ? Date.now() : now, tz)
 }
 
-// Set of every week key that met the target. Used for streaks and the cycle bonus.
+// Set of every week key that met its target. `target` may be a number or a function
+// `weekKey => target`, so per-week goals (S.gam.weekTargets) are honoured.
 export function fulfilledWeekKeys(workouts, tz, target) {
+  const targetOf = typeof target === 'function' ? target : () => target
   const counts = new Map()
   for (const w of validSessions(workouts)) {
     const k = sessionWeekKey(w, tz)
     counts.set(k, (counts.get(k) || 0) + 1)
   }
   const set = new Set()
-  for (const [k, n] of counts) if (n >= target) set.add(k)
+  for (const [k, n] of counts) if (n >= targetOf(k)) set.add(k)
   return set
 }

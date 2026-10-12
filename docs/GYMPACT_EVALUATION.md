@@ -53,6 +53,9 @@ pesos, descansos, historial, PWA y passkeys ya existían y no se reescribieron.
 - **Aviso semanal** (toast + notificación local) cuando falta 1 sesión para la meta.
 - **Export/import del catálogo de recompensas** (fusión por nombre) y **gráfica de
   puntos por semana**.
+- **Meta por semana** editable desde el dashboard; **export/import del historial de
+  puntos** (fusión idempotente por clave); **push de "1 sesión restante" con la app
+  cerrada** (servidor, a la hora del recordatorio).
 - **Idiomas principales: inglés y español**, ambos **100% completos** (claves nuevas
   y cadenas preexistentes de demo/self-host). El resto de idiomas siguen
   disponibles y caen a inglés en lo no traducido.

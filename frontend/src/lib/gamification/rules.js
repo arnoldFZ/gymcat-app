@@ -25,6 +25,15 @@ export function rulesOf(S) {
   return over ? { ...DEFAULT_RULES, ...over } : { ...DEFAULT_RULES }
 }
 
+// The target for a SPECIFIC week. A profile can override the goal for one week
+// (a lighter week, a holiday) in `S.gam.weekTargets[weekKey]`; otherwise it falls
+// back to the general weekly target. Used everywhere a week's fulfilment is judged.
+export function targetForWeek(S, weekKey) {
+  const over = S && S.gam && S.gam.weekTargets ? S.gam.weekTargets[weekKey] : null
+  const n = over == null ? null : +over
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : rulesOf(S).weeklyTarget
+}
+
 // A session only counts when it was finished and actually logged something:
 // at least one exercise entry with at least one completed set. This mirrors how
 // `doFinishWorkout` builds a workout (entries are filtered to those with a done
