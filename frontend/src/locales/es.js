@@ -721,4 +721,8 @@ export default {
   'Test': 'Probar',
   'Read on open': 'Leer al abrir',
   'Speak the exercise automatically when you open it.': 'Lee el ejercicio automáticamente al abrirlo.',
+  'Voice error: {0}': 'Error de voz: {0}',
+  'Voice not supported here': 'La voz no es compatible aquí',
+  'No system voices found — check your OS language settings.': 'No se encontraron voces del sistema: revisa el idioma del sistema operativo.',
+  'Testing voice — {0} voices available.': 'Probando la voz: {0} voces disponibles.',
 }

@@ -4,7 +4,8 @@ import { useStore } from './store/useStore.js'
 import { useUI } from './store/useUI.js'
 import { bindUI } from './components/ui.jsx'
 import { ACCENTS } from './lib/format.js'
-import { setLang, ensureLang, useLang } from './lib/i18n.js'
+import { setLang, ensureLang, useLang, t } from './lib/i18n.js'
+import { onSpeechError } from './lib/speech.js'
 import { setNav } from './lib/nav.js'
 import { useWakeLock } from './lib/wakelock.js'
 import { startFlow } from './sheets.jsx'
@@ -102,5 +103,11 @@ function Shell() {
 export default function App() {
   const boot = useStore(s => s.boot)
   useEffect(() => { boot() }, [boot])
+  // Surface a speech failure instead of staying silent (Chrome reports e.g.
+  // 'not-allowed' when the site/tab is muted or audio is blocked).
+  useEffect(() => {
+    onSpeechError(code => useUI.getState().toast(t('Voice error: {0}', code)))
+    return () => onSpeechError(null)
+  }, [])
   return <HashRouter><Shell /></HashRouter>
 }

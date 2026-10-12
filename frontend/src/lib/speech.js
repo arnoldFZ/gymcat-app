@@ -56,6 +56,16 @@ if (isSpeechSupported()) {
 export const voiceCount = () => voices.length
 
 let current = null
+let errorHandler = null
+// Let the app surface a speech failure (Chrome reports e.g. 'not-allowed' or
+// 'synthesis-failed' instead of just staying silent). Optional.
+export function onSpeechError(fn) { errorHandler = fn }
+function reportError(u, e) {
+  if (current === u) current = null
+  const code = e && e.error
+  if (code && code !== 'interrupted' && code !== 'canceled' && errorHandler) errorHandler(code)
+}
+
 export function stopSpeaking() {
   if (isSpeechSupported()) { try { window.speechSynthesis.cancel() } catch { /* */ } }
   current = null
@@ -66,20 +76,29 @@ export function stopSpeaking() {
 export function speak(text, tag) {
   if (!isSpeechSupported() || !text) return false
   const synth = window.speechSynthesis
-  try {
-    if (synth.speaking || synth.pending) synth.cancel()
+  const fire = () => {
     const u = new window.SpeechSynthesisUtterance(text)
     u.lang = tag || 'en-US'
     u.rate = 1
     u.pitch = 1
     u.volume = 1
     u.onend = () => { if (current === u) current = null }
-    u.onerror = () => { if (current === u) current = null }
-    // Hold a reference: iOS Safari can garbage-collect a detached utterance and then
-    // simply never plays it. This is the classic "nothing happens" speech bug.
+    u.onerror = e => reportError(u, e)
+    // Hold a reference: browsers can garbage-collect a detached utterance and then
+    // simply never play it — the classic "nothing happens" speech bug.
     current = u
     synth.speak(u)
     if (synth.paused) synth.resume()
+  }
+  try {
+    // Chrome drops an utterance queued in the SAME tick as cancel(). Only cancel when
+    // something is actually playing, and defer the new speech a moment after it.
+    if (synth.speaking || synth.pending) {
+      synth.cancel()
+      setTimeout(fire, 80)
+    } else {
+      fire()
+    }
     return true
   } catch { return false }
 }
