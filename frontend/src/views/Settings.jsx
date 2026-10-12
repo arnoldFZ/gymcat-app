@@ -11,6 +11,8 @@ import { t, PRIMARY_LANGS, INSTR_LANGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
 import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
 import { plansSheet, confirmSheet, importFromApp } from '../sheets.jsx'
+import { rewardsSheet, rulesSheet, ledgerSheet } from '../gamification.jsx'
+import { rulesOf } from '../lib/gamification/index.js'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
 
@@ -113,6 +115,15 @@ export default function Settings() {
           options={[{ value: 'kg', label: 'kg' }, { value: 'lb', label: 'lb' }]}
           value={S.unit} onChange={v => update(s => { s.unit = v })} />
       </Row>
+    </Section>
+
+    {/* ---------- GYMPACT ---------- */}
+    <Section title={t('Points & rewards')} footer={t('Constancy first: points reward finishing sessions and hitting your weekly goal — never weight or duration.')}>
+      <Row icon="target" iconTint="var(--acc)" title={t('Scoring rules')}
+        subtitle={t('{0} pts/session · goal {1}/week', rulesOf(S).sessionPoints, rulesOf(S).weeklyTarget)}
+        accessory="chevron" onClick={rulesSheet} />
+      <Row icon="medal" iconTint="var(--purple)" title={t('Rewards catalog')} accessory="chevron" onClick={rewardsSheet} />
+      <Row icon="history" iconTint="var(--blue)" title={t('Points history')} subtitle={t('Every movement, auditable.')} accessory="chevron" onClick={ledgerSheet} />
     </Section>
 
     {/* ---------- during a workout ---------- */}

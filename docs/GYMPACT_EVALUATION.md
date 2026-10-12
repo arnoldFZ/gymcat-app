@@ -44,6 +44,10 @@ pesos, descansos, historial, PWA y passkeys ya existían y no se reescribieron.
   volver a validar los restaura) sin borrar historial, y se **recalculan el volumen
   y los PRs** de esa sesión contra el resto del historial.
 - **`ruleVersion`** en cada movimiento de puntuación.
+- **Editor de reglas** en Ajustes (meta semanal, puntos, bonus, ciclo y zona horaria)
+  con reset a valores por defecto.
+- **Historial de puntos** auditable (cada movimiento + desglose por tipo).
+- Dashboard con **progreso de ciclo** y **resumen de la última sesión**.
 - **Idiomas principales: inglés y español**, ambos **100% completos** (claves nuevas
   y cadenas preexistentes de demo/self-host). El resto de idiomas siguen
   disponibles y caen a inglés en lo no traducido.

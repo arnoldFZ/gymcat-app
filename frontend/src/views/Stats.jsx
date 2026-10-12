@@ -18,7 +18,7 @@ import {
 } from '../lib/effort.js'
 import { Button, Segmented, SelectRow } from '../components/ui.jsx'
 import { dashboardStats, recentWeeks, complianceRate } from '../lib/gamification/index.js'
-import { rewardsSheet } from '../gamification.jsx'
+import { rewardsSheet, ledgerSheet } from '../gamification.jsx'
 
 // Which muscles the training in a window actually hit — and, the point of the card,
 // which ones it keeps missing. Shading is relative within the window (lib/muscles.js).
@@ -230,7 +230,10 @@ export default function Stats() {
         ))}
         <div className="small dim" style={{ marginTop: 8 }}>{t('A week counts only when it reaches {0} valid sessions.', gam.target)}</div>
         <div style={{ height: 12 }} />
-        <Button icon="medal" onClick={rewardsSheet}>{t('Rewards & history')}</Button>
+        <div className="row" style={{ gap: 8 }}>
+          <Button icon="medal" onClick={rewardsSheet}>{t('Rewards & history')}</Button>
+          <Button icon="history" onClick={ledgerSheet}>{t('Points history')}</Button>
+        </div>
       </> : <div className="muted small">{t('No sessions recorded yet — this fills in as you train.')}</div>}
     </div>
 

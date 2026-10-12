@@ -4,11 +4,12 @@ import { useUI } from './store/useUI.js'
 import { t } from './lib/i18n.js'
 import { fmtDate, uid } from './lib/format.js'
 import Icon from './components/Icon.jsx'
-import { Button, Switch, TextField, NumberField } from './components/ui.jsx'
+import { Button, Switch, TextField, NumberField, SelectRow } from './components/ui.jsx'
 import { confirmSheet } from './sheets.jsx'
 import {
   balance, redeem, canRedeem,
-  rewardsCatalog, redemptionHistory
+  rewardsCatalog, redemptionHistory,
+  rulesOf, DEFAULT_RULES, entries, pointsByType
 } from './lib/gamification/index.js'
 
 const ui = () => useUI.getState()
@@ -60,7 +61,10 @@ function RewardsSheet({ close }) {
           )
         })}
       </div>
-    ) : <div className="muted small">{t('No rewards yet — add one to give those points somewhere to go.')}</div>}
+    ) : <>
+      <div className="muted small" style={{ marginBottom: 10 }}>{t('No rewards yet — add one to give those points somewhere to go.')}</div>
+      <Button icon="sparkles" onClick={addExampleRewards}>{t('Add example rewards')}</Button>
+    </>}
 
     <div style={{ height: 12 }} />
     <Button variant="primary" icon="plus" onClick={() => rewardEditSheet(null)}>{t('Add reward')}</Button>
@@ -170,5 +174,154 @@ function RewardEdit({ reward, close }) {
     {reward && <><div style={{ height: 8 }} /><Button variant="danger" icon="trash" onClick={remove}>{t('Delete')}</Button></>}
     <div style={{ height: 8 }} />
     <Button variant="ghost" className="dim" onClick={close}>{t('Cancel')}</Button>
+  </>
+}
+
+/* ============================== example rewards ============================== */
+
+// Opt-in only: the brief says not to impose rigid personal prizes, so these are
+// clearly labelled examples the user can edit or delete.
+function addExampleRewards() {
+  editGam(g => {
+    const ex = [
+      { id: uid(), name: t('A good coffee'), desc: '', cost: 150, active: true },
+      { id: uid(), name: t('A rest day'), desc: '', cost: 400, active: true },
+      { id: uid(), name: t('New gear'), desc: '', cost: 1000, active: true }
+    ]
+    const have = new Set(g.rewards.map(r => (r.name || '').toLowerCase()))
+    for (const r of ex) if (!have.has(r.name.toLowerCase())) g.rewards.push(r)
+  })
+  toast(t('Example rewards added'))
+}
+
+/* ============================== scoring rules ============================== */
+
+const TZ_OPTIONS = [
+  'America/Lima', 'America/Bogota', 'America/Mexico_City', 'America/Santiago',
+  'America/Argentina/Buenos_Aires', 'America/New_York', 'Europe/Madrid',
+  'Europe/Lisbon', 'Europe/London', 'UTC'
+]
+
+export const rulesSheet = () => ui().openSheet(close => <RulesEdit close={close} />, { kind: 'center' })
+
+function RulesEdit({ close }) {
+  const S = useStore(s => s.S)
+  const r = rulesOf(S)
+  const [target, setTarget] = useState(r.weeklyTarget)
+  const [pts, setPts] = useState(r.sessionPoints)
+  const [wkBonus, setWkBonus] = useState(r.weeklyBonus)
+  const [cycWeeks, setCycWeeks] = useState(r.cycleWeeks)
+  const [cycBonus, setCycBonus] = useState(r.cycleBonus)
+  const [tz, setTz] = useState(r.tz)
+
+  const save = () => {
+    editGam(g => {
+      g.rules = {
+        weeklyTarget: Math.max(1, Math.round(+target || 1)),
+        sessionPoints: Math.max(0, Math.round(+pts || 0)),
+        weeklyBonus: Math.max(0, Math.round(+wkBonus || 0)),
+        cycleWeeks: Math.max(2, Math.round(+cycWeeks || 4)),
+        cycleBonus: Math.max(0, Math.round(+cycBonus || 0)),
+        tz,
+        ruleVersion: DEFAULT_RULES.ruleVersion
+      }
+    })
+    close()
+    toast(t('Rules saved'))
+  }
+  const reset = () => {
+    editGam(g => { g.rules = null })
+    close()
+    toast(t('Rules reset to defaults'))
+  }
+
+  return <>
+    <h3>{t('Scoring rules')}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('Changes apply to future points. Past movements keep the rule version they were scored with.')}</div>
+
+    <label className="sect-t" htmlFor="rw-target">{t('Sessions per week (goal)')}</label>
+    <NumberField id="rw-target" value={target} onChange={setTarget} decimal={false} />
+    <div style={{ height: 10 }} />
+    <label className="sect-t" htmlFor="rw-pts">{t('Points per session')}</label>
+    <NumberField id="rw-pts" value={pts} onChange={setPts} decimal={false} />
+    <div style={{ height: 10 }} />
+    <label className="sect-t" htmlFor="rw-wkbonus">{t('Weekly goal bonus')}</label>
+    <NumberField id="rw-wkbonus" value={wkBonus} onChange={setWkBonus} decimal={false} />
+    <div style={{ height: 10 }} />
+    <label className="sect-t" htmlFor="rw-cycweeks">{t('Weeks per cycle')}</label>
+    <NumberField id="rw-cycweeks" value={cycWeeks} onChange={setCycWeeks} decimal={false} />
+    <div style={{ height: 10 }} />
+    <label className="sect-t" htmlFor="rw-cycbonus">{t('Cycle bonus')}</label>
+    <NumberField id="rw-cycbonus" value={cycBonus} onChange={setCycBonus} decimal={false} />
+    <div style={{ height: 12 }} />
+
+    <div className="sect-b" style={{ marginBottom: 12 }}>
+      <SelectRow icon="globe" iconTint="var(--blue)" title={t('Week timezone')} value={tz} onChange={setTz} sheetTitle={t('Week timezone')}
+        options={[...new Set([tz, ...TZ_OPTIONS])].map(z => ({ value: z, label: z }))} />
+    </div>
+
+    <Button variant="primary" icon="check" onClick={save}>{t('Save')}</Button>
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" className="dim" onClick={reset}>{t('Reset to defaults')}</Button>
+    <div style={{ height: 8 }} />
+    <Button variant="ghost" className="dim" onClick={close}>{t('Cancel')}</Button>
+  </>
+}
+
+/* ============================== points history ============================== */
+
+const MOVE_ICON = { session: 'dumbbell', week_bonus: 'flame', cycle_bonus: 'crown', redeem: 'medal', compensation: 'reset' }
+function moveLabel(e) {
+  switch (e.type) {
+    case 'session': return t('Session')
+    case 'week_bonus': return t('Weekly bonus')
+    case 'cycle_bonus': return t('Cycle bonus')
+    case 'redeem': return (e.meta && e.meta.name) || t('Reward')
+    case 'compensation': return t('Adjustment')
+    default: return e.type || t('Movement')
+  }
+}
+function moveHint(e) {
+  const d = e.date ? fmtDate(String(e.date).slice(0, 10), true) : ''
+  if (e.type === 'week_bonus' || e.type === 'cycle_bonus') return [d, e.ref && e.ref.weekKey].filter(Boolean).join(' · ')
+  if (e.type === 'session' && e.meta && e.meta.d) return [d, e.meta.d].filter(Boolean).join(' · ')
+  return d
+}
+
+export const ledgerSheet = () => ui().openSheet(close => <LedgerSheet close={close} />, { kind: 'center' })
+
+function LedgerSheet({ close }) {
+  const S = useStore(s => s.S)
+  const ledger = S.gam && S.gam.ledger
+  const rows = entries(ledger).slice().reverse()
+  const byt = pointsByType(ledger)
+  const parts = [
+    byt.session ? t('{0} from sessions', byt.session) : null,
+    (byt.week_bonus || byt.cycle_bonus) ? t('{0} from bonuses', (byt.week_bonus || 0) + (byt.cycle_bonus || 0)) : null,
+    byt.redeem ? t('{0} spent', Math.abs(byt.redeem)) : null
+  ].filter(Boolean)
+
+  return <>
+    <h3>{t('Points history')}</h3>
+    <div className="row between" style={{ marginBottom: 6 }}>
+      <span className="muted small">{t('Available points')}</span>
+      <span style={{ fontWeight: 600, fontSize: 18 }}>{balance(ledger)}</span>
+    </div>
+    {parts.length > 0 && <div className="dim small" style={{ marginBottom: 12 }}>{parts.join(' · ')}</div>}
+
+    {rows.length ? (
+      <div className="list">
+        {rows.map(e => (
+          <div key={e.id} className="item">
+            <span className="lrow-i" style={{ background: 'var(--surface-2)' }}><Icon name={MOVE_ICON[e.type] || 'dot'} /></span>
+            <div className="grow"><div className="tt">{moveLabel(e)}</div><div className="ss">{moveHint(e)}</div></div>
+            <span style={{ fontWeight: 600, color: (+e.delta || 0) >= 0 ? 'var(--acc)' : 'var(--label-2)' }}>{(+e.delta || 0) >= 0 ? '+' : ''}{e.delta}</span>
+          </div>
+        ))}
+      </div>
+    ) : <div className="muted small">{t('No movements yet.')}</div>}
+
+    <div style={{ height: 10 }} />
+    <Button variant="ghost" className="dim" onClick={close}>{t('Close')}</Button>
   </>
 }

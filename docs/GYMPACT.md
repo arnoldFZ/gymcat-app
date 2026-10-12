@@ -17,7 +17,11 @@ Valores iniciales en `frontend/src/lib/gamification/rules.js` (`DEFAULT_RULES`):
 
 Se pueden sobreescribir por perfil en `S.gam.rules` (p. ej. `{ weeklyTarget: 4 }`).
 `rulesOf(S)` mezcla los overrides sobre los defaults, así que un perfil antiguo o
-parcial sigue funcionando.
+parcial sigue funcionando. **Se editan desde la app**: Ajustes → *Puntos y
+recompensas* → *Reglas de puntuación* (sesiones/semana, puntos por sesión, bonus
+semanal, semanas por ciclo, bonus de ciclo y zona horaria de la semana), con opción
+de *Restablecer valores por defecto*. Los cambios solo afectan a puntos futuros: cada
+movimiento guarda la `ruleVersion` con la que se calculó.
 
 ## Qué es una "sesión válida"
 
@@ -75,16 +79,28 @@ Catálogo personal en `S.gam.rewards`: `{ id, name, desc, cost, active }`.
   descontar**.
 - El historial de canjes vive en el propio ledger (el nombre se guarda en `meta`
   para que siga leyéndose si la recompensa se renombra o se borra).
+- Si el catálogo está vacío, un botón **opcional** *Añadir recompensas de ejemplo*
+  propone tres (café, día de descanso, equipamiento), editables o borrables: no se
+  impone ningún premio personal.
 
 ## Dashboard y analítica
 
 - **Home** (`views/Home.jsx`): meta semanal `X / 3` como elemento principal con
   barra de progreso, puntos disponibles, puntos ganados esta semana, racha de
-  semanas cumplidas, recompensa próxima y botón iniciar/continuar. Los estados
-  vacíos distinguen "sin datos" de "cero".
+  semanas cumplidas, **progreso hacia el bonus de ciclo** (p. ej. `3/4 semanas hacia
+  +300`), **resumen de la última sesión**, recompensa próxima y botón
+  iniciar/continuar. Los estados vacíos distinguen "sin datos" de "cero".
 - **Stats** (`views/Stats.jsx`): tarjeta *Constancy* con puntos, racha,
   % de semanas cumplidas, sesiones por semana (últimas 8) y acceso a
-  *Rewards & history*.
+  *Rewards & history* y *Points history*.
+
+## Registro auditable (Points history)
+
+Ajustes → *Puntos y recompensas* → *Historial de puntos* (y desde Stats) muestra
+cada movimiento del ledger: sesión, bonus semanal/de ciclo, canje y ajustes por
+corrección/borrado, con fecha, referencia y delta. Arriba resume el saldo y el
+desglose ("X en sesiones · Y en bonus · Z gastados"). Nada se borra: las
+correcciones y borrados aparecen como movimientos, no desaparecen.
 
 ## Planes sugeridos
 

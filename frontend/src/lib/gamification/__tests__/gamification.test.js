@@ -9,7 +9,7 @@ import {
   applyEvents, balance, hasKey, entriesForKey, compensateEvents, pointsEarnedInWeek,
   reconcileSessionEvents, familyNet,
   activeRewards, canRedeem, nextReward, tryRedeem, redemptionHistory,
-  dashboardStats, recentWeeks, complianceRate
+  dashboardStats, recentWeeks, complianceRate, cycleProgress, lastSession, pointsByType
 } from '../index.js'
 
 /* ------------------------------------------------------------------ helpers */
@@ -377,8 +377,48 @@ describe('correcting a saved session', () => {
   })
 })
 
-/* -------------------------------------------------- backwards compatibility */
-describe('profiles written before the feature', () => {
+/* ------------------------------------------- cycle progress + summaries */
+
+describe('cycle progress, last session, points breakdown', () => {
+  it('cycleProgress counts weeks into the current cycle', () => {
+    const S = emptyS()
+    for (let week = 0; week < 4; week++) for (const w of weekOf(0, week)) S.workouts.push(w)
+    const c4 = cycleProgress(S, at('2026-01-26T15:00:00Z'))
+    expect(c4.streak).toBe(4)
+    expect(c4.into).toBe(4)
+    expect(c4.onCycle).toBe(true)
+
+    for (const w of weekOf(0, 4)) S.workouts.push(w)   // 5th fulfilled week
+    const c5 = cycleProgress(S, at('2026-02-02T15:00:00Z'))
+    expect(c5.streak).toBe(5)
+    expect(c5.into).toBe(1)
+    expect(c5.onCycle).toBe(false)
+  })
+
+  it('lastSession summarises the newest workout', () => {
+    const S = emptyS()
+    S.workouts.push(wAt('old', at('2026-01-05T15:00:00Z'), '2026-01-05'))
+    S.workouts.push(wAt('new', at('2026-01-07T15:00:00Z'), '2026-01-07'))
+    expect(lastSession(S).id).toBe('new')
+    expect(lastSession({ workouts: [] })).toBeNull()
+  })
+
+  it('pointsByType splits the ledger by movement type', () => {
+    let led = applyEvents([], [{ type: 'session', delta: 100, key: 's1' }, { type: 'week_bonus', delta: 150, key: 'w1' }])
+    led = applyEvents(led, [{ type: 'redeem', delta: -80, key: 'r1' }])
+    expect(pointsByType(led)).toEqual({ session: 100, week_bonus: 150, redeem: -80 })
+  })
+
+  it('a custom weekly target changes when the bonus is due', () => {
+    const S = { workouts: [], gam: { rules: { weeklyTarget: 2 }, ledger: [], rewards: [] } }
+    finish(S, wAt('a', at('2026-01-05T15:00:00Z'), '2026-01-05'))
+    expect(hasKey(S.gam.ledger, weekBonusKey('2026-W02'))).toBe(false)   // 1 session, target 2
+    finish(S, wAt('b', at('2026-01-06T15:00:00Z'), '2026-01-06'))
+    expect(hasKey(S.gam.ledger, weekBonusKey('2026-W02'))).toBe(true)    // 2nd session hits a target of 2
+  })
+})
+
+/* -------------------------------------------------- backwards compatibility */describe('profiles written before the feature', () => {
   it('works with no `gam` key and with a partially-set one', () => {
     const legacy = { workouts: [], routines: [], bodyweight: [] }   // pre-GYMPACT state
     const d = dashboardStats(legacy, at('2026-01-06T15:00:00Z'))

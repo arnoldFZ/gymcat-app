@@ -77,6 +77,20 @@ export default function Home() {
         <div className="gstat"><div className="lbl">{t('Streak')}</div><div className="v">{gam.streak}<span className="small muted">{' ' + t('weeks')}</span></div></div>
       </div>
 
+      {gam.cycle.streak > 0 && (
+        <div className="row small" style={{ gap: 6, marginTop: 10, color: 'var(--label-2)' }}>
+          <Icon name="crown" style={{ color: 'var(--yellow)', fontSize: 15 }} />
+          <span>{gam.cycle.onCycle
+            ? t('{0}-week cycle complete · +{1} points', gam.cycle.cycleWeeks, gam.cycle.bonus)
+            : t('{0}/{1} weeks towards +{2}', gam.cycle.into, gam.cycle.cycleWeeks, gam.cycle.bonus)}</span>
+        </div>
+      )}
+      {gam.last && (
+        <div className="dim small" style={{ marginTop: 6 }}>
+          {t('Last: {0} · {1}', gam.last.name, fmtDate(gam.last.d, true))}
+        </div>
+      )}
+
       {gam.nextReward ? (
         <button className="gnext" onClick={rewardsSheet}>
           <span className="icn"><Icon name="medal" /></span>
