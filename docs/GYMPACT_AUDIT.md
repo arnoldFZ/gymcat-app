@@ -252,3 +252,27 @@ helper de finalización solo *llama*, no contiene reglas.
   concreto que quieras que use en su lugar?
 - **Comportamiento de sync:** confirmar que se acepta la idempotencia + last-write-wins
   (sin backend transaccional) como límite documentado, según permite el spec.
+
+---
+
+## 9. Actualización (decisiones y fases completadas)
+
+Decisiones tomadas con el usuario y ejecutadas:
+
+- **Nombre:** renombrado a **GymCat** (marca, `package.json`, `docker-compose`,
+  `RP_NAME`, Capacitor `appName`), conservando a propósito identificadores de
+  compatibilidad de datos (`gym_state_v1`, `opengym-state.json`, marcador de plan
+  `opengym_plan`, `appId` de Capacitor) y las URLs de atribución upstream.
+- **Git:** `git init` local (sin remoto); baseline `d276e02`, renombrado,
+  dominio+tests, integración y UI en commits separados.
+- **Base:** se usó `openGym-main.zip` (upstream `v1.2.4`), al no existir fork
+  GymCat previo.
+- **Sync:** se acepta idempotencia + last-write-wins como límite documentado
+  (ver `docs/GYMPACT.md` §"Límite conocido" y `docs/GYMPACT_EVALUATION.md` §5).
+- **Docker:** las imágenes dejan de apuntar a GHCR de upstream
+  (`gymcat-api` / `gymcat-web` se construyen localmente con `--build`).
+
+Fases 1–6 completadas; ver `docs/GYMPACT.md` (feature) y
+`docs/GYMPACT_EVALUATION.md` (B vs C). Estado: `npm test` 221 ✅,
+`npm run build` ✅.
+

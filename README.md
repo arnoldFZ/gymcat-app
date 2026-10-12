@@ -83,6 +83,16 @@ as a home-screen app, passkey sign-in, offline support, sync across your phone a
 - 📦 **Yours to keep** — one-tap JSON export/import, guest mode, **no telemetry**
 - 📱 **Standalone Android app** — the whole tracker as a sideloadable APK: no account, no server, data on the phone, native workout reminders ([download](https://opengym.duarte-santos.ch))
 
+## GYMPACT — constancy scoring
+
+GymCat ships **GYMPACT**, a gamification layer that rewards *showing up*, not
+volume: **+100** per valid finished session, **+150** when a week reaches **3**
+sessions, **+300** for **4 consecutive weeks** on target. Weeks are counted in
+`America/Lima`, points live in an append-only, idempotent ledger (re-processing or
+re-trying never double-counts), deleting a session compensates instead of erasing
+history, and you get a personal reward catalogue you can redeem from your balance.
+See **[docs/GYMPACT.md](docs/GYMPACT.md)**.
+
 ## Quick start (self-host)
 
 You need [Docker](https://docs.docker.com/get-docker/) with Compose.
