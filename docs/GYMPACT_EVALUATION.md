@@ -41,19 +41,18 @@ pesos, descansos, historial, PWA y passkeys ya existían y no se reescribieron.
 - **Analítica** (Stats): puntos, racha, % de semanas cumplidas, sesiones/semana.
 - **Corrección de sesión**: desde el detalle del entrenamiento se marca/desmarca
   una serie; el ledger reconcilia el neto de la sesión (invalidar quita puntos,
-  volver a validar los restaura) sin borrar historial.
+  volver a validar los restaura) sin borrar historial, y se **recalculan el volumen
+  y los PRs** de esa sesión contra el resto del historial.
 - **`ruleVersion`** en cada movimiento de puntuación.
-- **i18n**: cadenas nuevas traducidas a **es**; el resto de idiomas cae a inglés.
+- **Idiomas principales: inglés y español**, ambos **100% completos** (claves nuevas
+  y cadenas preexistentes de demo/self-host). El resto de idiomas siguen
+  disponibles y caen a inglés en lo no traducido.
 - Renombrado a **GymCat** conservando compatibilidad de datos y atribución.
 
 ### Pendientes / no hechas
 - **No hay puntos retroactivos** por historial previo/importado (decisión
   documentada, no un descuido).
 - **No hay autoridad de servidor** sobre los puntos (ver §5).
-- **i18n**: de, fr, it, pt, pl, tr, ru, zh, ko, hi siguen cayendo a inglés para las
-  cadenas nuevas (pendiente mecánico).
-- Recalcular `prs` (PRs) tras corregir series no se hace: un PR puede quedar
-  marcado aunque se deshaga la serie (el volumen y la validez sí se recalculan).
 
 ## 3. Tests y build
 
@@ -116,9 +115,9 @@ Criterios 1–12 del spec B: 1,2,3 (sesión/duplicados), 4 (bonus semanal),
    personal; revisar si se vuelve multi-usuario.
 2. Semana/racha calculada a partir de `S.workouts` en cada lectura (no
    materializada). Rápido para volúmenes personales; vigilar con historial enorme.
-3. Traducciones de las cadenas nuevas solo en `es`; el resto cae a inglés.
-4. Corregir series no recalcula los PRs de esa sesión (volumen y validez sí).
-5. 19 vulnerabilidades en el árbol de dependencias (preexistentes, no atribuibles
+3. Idiomas: **inglés y español son los mantenidos y están completos**; los otros 10
+   siguen disponibles pero caen a inglés en las cadenas nuevas.
+4. 19 vulnerabilidades en el árbol de dependencias (preexistentes, no atribuibles
    a esta feature) y chunks grandes (preexistente).
 
 ## 9. Coste operativo estimado

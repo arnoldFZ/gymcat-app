@@ -606,4 +606,22 @@ export default {
   'Session no longer valid — its points were removed.': 'La sesión ya no es válida: se retiraron sus puntos.',
   'Session counts again — its points were restored.': 'La sesión vuelve a contar: se restauraron sus puntos.',
   'Tap a set to mark it done or not done — your points adjust automatically.': 'Toca una serie para marcarla hecha o no hecha: tus puntos se ajustan solos.',
+
+  // Cadenas preexistentes (demo / self-host) que faltaban en español.
+  'Demo': 'Demo',
+  'Demo data reset': 'Datos de demo restablecidos',
+  'Example data, stored only in this browser — change anything you like.': 'Datos de ejemplo, guardados solo en este navegador: cambia lo que quieras.',
+  'Exercise': 'Ejercicio',
+  'Live demo — everything stays in this browser.': 'Demo en vivo: todo se queda en este navegador.',
+  'No exercises yet.': 'Aún no hay ejercicios.',
+  'Passkey sign-in, sync across your devices, your own data.': 'Inicio con passkey, sincronización entre tus dispositivos, tus propios datos.',
+  'Puts the example plan, workouts and weigh-ins back the way they started.': 'Devuelve el plan, los entrenamientos y los pesajes de ejemplo a como estaban al principio.',
+  'Reset': 'Restablecer',
+  'Reset demo data': 'Restablecer datos de demo',
+  'Reset demo data?': '¿Restablecer datos de demo?',
+  'Self-host GymCat': 'Autoaloja GymCat',
+  'Self-host it in a minute →': 'Autoalójalo en un minuto →',
+  'Start the demo': 'Empezar la demo',
+  'This demo runs entirely in your browser on example data — nothing is sent anywhere. Passkey sign-in and sync across your devices come with the GymCat server, which you get by self-hosting it.': 'Esta demo funciona por completo en tu navegador con datos de ejemplo: no se envía nada a ningún sitio. El inicio con passkey y la sincronización entre dispositivos vienen con el servidor de GymCat, que obtienes autoalojándolo.',
+  'You’re in the demo': 'Estás en la demo',
 }

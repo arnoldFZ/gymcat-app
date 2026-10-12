@@ -763,6 +763,12 @@ function WorkoutDetail({ w, close }) {
       if (!set) return
       set.done = !set.done
       wk.vol = workoutVolume(wk)
+      // Recompute this session's load PRs against the REST of history: correcting a
+      // set can add or clear a PR, and it must not be compared against itself.
+      wk.prs = wk.entries.filter(e => {
+        const mx = Math.max(0, ...e.sets.filter(x => x.done).map(x => x.w || 0), e.topW || 0)
+        return mx > 0 && mx > bestWeightFor(s, e.id, wk.id)
+      }).map(e => e.id)
       if (!s.gam) s.gam = { rules: null, ledger: [], rewards: [] }
       s.gam.ledger = applyEvents(s.gam.ledger, reconcileSessionEvents(s.gam.ledger, wk, rulesOf(s)))
     })

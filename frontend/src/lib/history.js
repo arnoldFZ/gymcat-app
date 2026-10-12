@@ -148,14 +148,19 @@ export function lastEntryFor(S, exId) {
   }
   return null
 }
-export function bestWeightFor(S, exId) {
+export function bestWeightFor(S, exId, excludeId) {
   let best = 0
-  S.workouts.forEach(w => w.entries.forEach(e => {
-    if (e.id === exId) {
-      e.sets.forEach(s => { if (s.done && s.w > best) best = s.w })
-      if (e.topW && e.topW > best) best = e.topW
-    }
-  }))
+  S.workouts.forEach(w => {
+    // `excludeId` lets a saved workout be scored against the REST of history, so
+    // correcting its sets can recompute its own PRs without comparing it to itself.
+    if (excludeId && w.id === excludeId) return
+    w.entries.forEach(e => {
+      if (e.id === exId) {
+        e.sets.forEach(s => { if (s.done && s.w > best) best = s.w })
+        if (e.topW && e.topW > best) best = e.topW
+      }
+    })
+  })
   return best
 }
 export function effectiveRoutineId(S, iso) {

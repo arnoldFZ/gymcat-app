@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep } from './history.js'
+import { modeOf, isTimed, fmtSec, setLabel, defaultConfig, buildSets, exLine, workoutVolume, effortOf, stepEffort, capEffort, isBw, isPerSide, sideReps, repStep, bestWeightFor } from './history.js'
 import { EXDB } from './exercises.js'
 
 // Real ids out of the shipped catalogue, so the body-part fallback is exercised for real.
@@ -8,6 +8,19 @@ const CARDIO = EXDB.find(e => e.bp === 'cardio').id
 // defaults to bodyweight and would quietly send every label test down the other path.
 const LIFT = EXDB.find(e => e.bp !== 'cardio' && e.eq !== 'body weight').id
 const BW = EXDB.find(e => e.eq === 'body weight').id
+
+describe('bestWeightFor', () => {
+  const S = { workouts: [
+    { id: 'a', entries: [{ id: 'x', sets: [{ w: 60, r: 5, done: true }] }] },
+    { id: 'b', entries: [{ id: 'x', sets: [{ w: 80, r: 5, done: true }], topW: 90 }] }
+  ] }
+  it('finds the heaviest done set (and topW) across history', () => {
+    expect(bestWeightFor(S, 'x')).toBe(90)
+  })
+  it('can exclude a workout so it is scored against the rest of history', () => {
+    expect(bestWeightFor(S, 'x', 'b')).toBe(60)
+  })
+})
 
 describe('modeOf', () => {
   it('falls back to the body part when a plan has no mode — every existing plan keeps working', () => {

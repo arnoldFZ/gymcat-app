@@ -48,7 +48,8 @@ y cambio de año (`2025-12-29` → `2026-W01`, etc.).
 - **Corregir una sesión** (en el detalle del entrenamiento, toca una serie para
   marcarla hecha/no hecha): `reconcileSessionEvents` lleva el **neto** de esa sesión a
   `+100` (válida) o `0` (ya no válida) con un movimiento `…:adj:<n>` idempotente. La
-  sesión sigue en el historial; solo se añade un ajuste.
+  sesión sigue en el historial; solo se añade un ajuste. Además se recalculan el
+  volumen y los PRs de esa sesión contra el resto del historial (nunca contra sí misma).
 - **Borrar una sesión** (`WorkoutDetail` → Delete) añade un movimiento compensatorio
   `comp:session:<id>` que anula el **neto de toda la familia** (concesión + ajustes);
   **no borra** el historial. Los bonus semanales/de ciclo ya ganados se mantienen (se
@@ -113,6 +114,10 @@ frontend/src/gamification.jsx   # hojas de UI: catálogo, canje, alta/edición
 
 La lógica de dominio es **pura y sin React**. La frontera de finalización
 (`doFinishWorkout` en `sheets.jsx`) solo *llama* al dominio; no contiene reglas.
+
+Idiomas: **inglés (origen) y español** son los principales y están **100%
+completos** (incluidas demo/self-host); el resto de idiomas siguen disponibles y
+caen a inglés en lo que no esté traducido.
 
 ## Pruebas
 
