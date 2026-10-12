@@ -312,8 +312,7 @@ describe('dashboard', () => {
     expect(d.earnedThisWeek).toBe(200)
   })
 
-  it('rulesOf merges overrides over defaults', () => {
-    expect(rulesOf({})).toEqual(DEFAULT_RULES)
+  it('rulesOf merges overrides over defaults', () => {    expect(rulesOf({})).toEqual(DEFAULT_RULES)
     expect(rulesOf({ gam: { rules: { weeklyTarget: 2 } } }).weeklyTarget).toBe(2)
     expect(rulesOf({ gam: { rules: { weeklyTarget: 2 } } }).tz).toBe('America/Lima')
   })
@@ -335,5 +334,27 @@ describe('fulfilledWeekKeys', () => {
     for (const w of weekOf(0, 0)) S.workouts.push(w)
     expect(fulfilledWeekKeys(S.workouts, TZ, 3).has('2026-W02')).toBe(true)
     expect(fulfilledWeekKeys(S.workouts, TZ, 4).has('2026-W02')).toBe(false)
+  })
+})
+
+/* -------------------------------------------------- backwards compatibility */
+
+describe('profiles written before the feature', () => {
+  it('works with no `gam` key and with a partially-set one', () => {
+    const legacy = { workouts: [], routines: [], bodyweight: [] }   // pre-GYMPACT state
+    const d = dashboardStats(legacy, at('2026-01-06T15:00:00Z'))
+    expect(d.balance).toBe(0)
+    expect(d.sessions).toBe(0)
+    expect(d.nextReward).toBeNull()
+    expect(eventsForFinishedWorkout({ workouts: [] }, wAt('x', 1, '2026-01-05'))).toHaveLength(1) // defaults apply
+    // A partially-written container must not throw either.
+    expect(() => dashboardStats({ workouts: [], gam: {} }, 0)).not.toThrow()
+    expect(() => compensateEvents(undefined, 'session:x')).not.toThrow()
+  })
+
+  it('a default profile does not gain points from existing history alone', () => {
+    const S = { workouts: [wAt('a', at('2026-01-05T15:00:00Z'), '2026-01-05')] }  // history, no ledger
+    expect(balance(S.gam && S.gam.ledger)).toBe(0)
+    expect(dashboardStats(S, at('2026-01-06T15:00:00Z')).balance).toBe(0)
   })
 })

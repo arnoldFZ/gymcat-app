@@ -17,6 +17,8 @@ import {
   effortHistogram, isHardSet, HARD_RIR
 } from '../lib/effort.js'
 import { Button, Segmented, SelectRow } from '../components/ui.jsx'
+import { dashboardStats, recentWeeks, complianceRate } from '../lib/gamification/index.js'
+import { rewardsSheet } from '../gamification.jsx'
 
 // Which muscles the training in a window actually hit — and, the point of the card,
 // which ones it keeps missing. Shading is relative within the window (lib/muscles.js).
@@ -194,6 +196,11 @@ export default function Stats() {
   if (showE1) exOpts.push({ value: 'e1rm', label: t('Est. 1RM') })
   if (showEff) exOpts.push({ value: 'effort', label: t('Effort') })
 
+  const gam = dashboardStats(S)
+  const gamWeeks = recentWeeks(S, 8)
+  const comp = complianceRate(S, 8)
+  const gamMax = Math.max(gam.target, ...gamWeeks.map(w => w.count), 1)
+
   return <>
     <div className="hdr"><div><h1>{t('Stats')}</h1><div className="sub">{t('Progress & history')}</div></div>
       <button className="iconbtn" onClick={() => nav('/history')} aria-label={t('History')}><Icon name="history" /></button></div>
@@ -203,6 +210,28 @@ export default function Stats() {
       <div className="tile"><div className="l"><Icon name="calendar" />{t('This month')}</div><div className="v">{monthW}</div></div>
       <div className="tile"><div className="l"><Icon name="flame" />{t('Week streak')}</div><div className="v">{streakWeeks(S)}</div></div>
       <div className="tile"><div className="l"><Icon name="scale" />{t('Weight 30d')}</div><div className="v" style={{ fontSize: 22, color: bwDelta30 === null ? 'inherit' : bwDeltaColor(bwDelta30, (lastBW(S) || {}).w || 0) }}>{bwDelta30 === null ? '—' : (bwDelta30 > 0 ? '+' : '') + fmtNum(bwDelta30) + ' ' + S.unit}</div></div>
+    </div>
+
+    <div className="card">
+      <h2>{t('Constancy')} <span className="dim" style={{ textTransform: 'none', letterSpacing: 0 }}>· {t('the point of the app')}</span></h2>
+      {gam.hasData ? <>
+        <div className="gstats" style={{ marginTop: 0 }}>
+          <div className="gstat"><div className="lbl">{t('Points')}</div><div className="v">{gam.balance}</div></div>
+          <div className="gstat"><div className="lbl">{t('Streak')}</div><div className="v">{gam.streak}<span className="small muted">{' ' + t('weeks')}</span></div></div>
+          <div className="gstat"><div className="lbl">{t('Goal met')}</div><div className="v">{comp ? Math.round(comp.rate * 100) + '%' : '—'}</div></div>
+        </div>
+        <h4 className="sec" style={{ margin: '16px 0 6px' }}>{t('Sessions per week')}</h4>
+        {gamWeeks.map(w => (
+          <div key={w.weekKey} className="row" style={{ gap: 10, padding: '3px 0' }}>
+            <span className="dim small" style={{ width: 66, flex: 'none' }}>{w.weekKey.replace('-W', ' W')}</span>
+            <div className="gbar" style={{ flex: 1, marginTop: 0 }}><div className="gbar-fill" style={{ width: Math.round((w.count / gamMax) * 100) + '%' }} /></div>
+            <span className="small" style={{ width: 34, textAlign: 'right', flex: 'none', color: w.fulfilled ? 'var(--acc)' : 'inherit' }}>{w.count}/{gam.target}</span>
+          </div>
+        ))}
+        <div className="small dim" style={{ marginTop: 8 }}>{t('A week counts only when it reaches {0} valid sessions.', gam.target)}</div>
+        <div style={{ height: 12 }} />
+        <Button icon="medal" onClick={rewardsSheet}>{t('Rewards & history')}</Button>
+      </> : <div className="muted small">{t('No sessions recorded yet — this fills in as you train.')}</div>}
     </div>
 
     <div className="card">

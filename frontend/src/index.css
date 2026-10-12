@@ -205,6 +205,33 @@ h4.sec{
 }
 .card .big{font-size:30px;font-weight:600;letter-spacing:-.026em;line-height:1.1}
 
+/* ------------------------------------------------ gamification (GYMPACT) -- */
+/* Weekly-goal progress bar + compact stats. Accent used sparingly: only the
+   filled bar and the points earned this week carry colour. */
+.gbar{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden;margin-top:10px}
+.gbar-fill{height:100%;background:var(--acc);border-radius:999px;transition:width .25s ease}
+.gstats{display:flex;gap:8px;margin-top:14px}
+.gstat{flex:1;min-width:0}
+.gstat .lbl{
+  font-size:11px;font-weight:500;letter-spacing:.03em;text-transform:uppercase;color:var(--label-3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.gstat .v{font-size:20px;font-weight:600;letter-spacing:-.02em;margin-top:3px}
+.gstat .v.acc{color:var(--acc)}
+.gnext{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;color:var(--label);
+  margin-top:14px;padding-top:13px;border-top:var(--hair) solid var(--sep);
+}
+.gnext .icn{
+  width:30px;height:30px;border-radius:8px;flex:none;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--acc-soft);color:var(--acc);
+}
+.gnext .grow{flex:1;min-width:0}
+.gnext .grow .tt{font-size:15px;font-weight:500;letter-spacing:-.009em}
+.gnext .grow .ss{color:var(--label-2);font-size:12.5px;margin-top:1px}
+.gnext:active{opacity:.65}
+
 /* ------------------------------------------------------ inset group list -- */
 .sect{margin-bottom:22px}
 .sect-t{

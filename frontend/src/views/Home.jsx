@@ -9,6 +9,8 @@ import LineChart from '../components/LineChart.jsx'
 import Icon from '../components/Icon.jsx'
 import { Button } from '../components/ui.jsx'
 import { glyphOf } from '../lib/glyphs.js'
+import { dashboardStats } from '../lib/gamification/index.js'
+import { rewardsSheet } from '../gamification.jsx'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
@@ -45,10 +47,65 @@ export default function Home() {
   // today's session shown right under the week strip
   const onToday = () => { if (S.active) nav('/workout'); else if (routine) startFlow(routine.id); else dayOverrideSheet(todayISO()) }
 
+  // GYMPACT: weekly goal, points and streak — constancy, not volume.
+  const gam = dashboardStats(S)
+  const goalPct = Math.min(100, Math.round((gam.sessions / Math.max(1, gam.target)) * 100))
+
   return <div className="narrow">
     <div className="hdr">
       <div><h1>{user ? t('Hi {0}', user.name) : 'GymCat'}</h1><div className="sub">{today.toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' })}</div></div>
       <button className="iconbtn" onClick={() => nav('/settings')} aria-label={t('Settings')}><Icon name="gear" /></button>
+    </div>
+
+    {/* GYMPACT dashboard — the weekly goal is the primary element */}
+    <div className="card">
+      <h2>{t('Weekly goal')}</h2>
+      <div className="row" style={{ gap: 8, alignItems: 'baseline' }}>
+        <div className="big">{gam.sessions}<span className="muted" style={{ fontSize: '1.05rem', fontWeight: 500 }}>{' / ' + gam.target}</span></div>
+        <span className="small muted">{t('valid sessions')}</span>
+        {gam.goalMet
+          ? <span className="tag acc" style={{ marginLeft: 'auto' }}>{t('Goal met!')}</span>
+          : <span className="dim small" style={{ marginLeft: 'auto' }}>{t('{0} to go', gam.remainingToGoal)}</span>}
+      </div>
+      <div className="gbar" role="progressbar" aria-valuenow={gam.sessions} aria-valuemin="0" aria-valuemax={gam.target} aria-label={t('Weekly goal progress')}>
+        <div className="gbar-fill" style={{ width: goalPct + '%' }} />
+      </div>
+
+      <div className="gstats">
+        <div className="gstat"><div className="lbl">{t('Points')}</div><div className="v">{gam.balance}</div></div>
+        <div className="gstat"><div className="lbl">{t('This week')}</div><div className="v acc">{'+' + gam.earnedThisWeek}</div></div>
+        <div className="gstat"><div className="lbl">{t('Streak')}</div><div className="v">{gam.streak}<span className="small muted">{' ' + t('weeks')}</span></div></div>
+      </div>
+
+      {gam.nextReward ? (
+        <button className="gnext" onClick={rewardsSheet}>
+          <span className="icn"><Icon name="medal" /></span>
+          <div className="grow">
+            <div className="tt">{gam.nextReward.name}</div>
+            <div className="ss">{gam.balance >= gam.nextReward.cost ? t('Ready to redeem') : t('{0} points to go', gam.nextReward.cost - gam.balance)}</div>
+          </div>
+          <Icon name="chevronRight" className="chev" />
+        </button>
+      ) : (
+        <button className="gnext" onClick={rewardsSheet}>
+          <span className="icn"><Icon name="plus" /></span>
+          <div className="grow">
+            <div className="tt">{t('Add a reward')}</div>
+            <div className="ss">{t('Give those points somewhere to go.')}</div>
+          </div>
+          <Icon name="chevronRight" className="chev" />
+        </button>
+      )}
+
+      {!gam.hasData && !S.active && (
+        <div className="muted small" style={{ marginTop: 12 }}>{t('No valid sessions yet — finish a workout to start earning points.')}</div>
+      )}
+
+      {S.active
+        ? <><div style={{ height: 14 }} /><Button variant="primary" icon="play" onClick={() => nav('/workout')}>{t('Continue workout')}</Button></>
+        : routine
+          ? <><div style={{ height: 14 }} /><Button variant="primary" icon="dumbbell" onClick={onToday}>{t('Start workout')}</Button></>
+          : null}
     </div>
 
     <div className="card">
