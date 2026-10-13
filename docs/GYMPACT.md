@@ -198,7 +198,6 @@ caen a inglés en lo que no esté traducido.
 de zona (`America/Lima`), mes y año. `npm run build` para el bundle.
 
 ## Verificación manual en iPhone (checklist)
-
 Lo automatizable está cubierto por tests; esto requiere un dispositivo y no se ha
 ejecutado aquí. Al abrir en Safari (o como PWA añadida a inicio):
 

@@ -144,8 +144,27 @@ mobile app is the install-and-done flavor.
 - **api/** — Node with no framework, one dependency (`@simplewebauthn/server`), storing everything as plain JSON files under `./data`
 - **web/** — a multi-stage image that builds the frontend and serves it with nginx, proxying `/api` to the backend so it's all on **one origin** (passkeys require this)
 
-## Your data
+## Local development (npm, no Docker)
 
+```bash
+cd frontend
+npm ci
+npm run dev            # app on :5173 — proxies /api → :3000 and /img,/gif → :8888
+npm run media          # in another terminal: serves ./media on :8888 (images + animations)
+```
+
+The exercise **images and animations** (1324 each) live in `./media` and are **not** part
+of the repo. The dev server asks for them at `:8888`, so without `npm run media` the
+animations stay blank. No local media? Point the app at the upstream CDN instead:
+
+```bash
+cd frontend
+VITE_IMG_BASE=https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/ \
+VITE_GIF_BASE=https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/ \
+npm run dev
+```
+
+## Your data
 Lives in `./data` on your host: `db.json` (profiles + public passkeys), `state-<user>.json`
 (each user's plan, workouts, body weight, settings), and `secret` (the session-cookie key).
 **Back up `./data` and you've backed up everything.** Passkey private keys never touch the
