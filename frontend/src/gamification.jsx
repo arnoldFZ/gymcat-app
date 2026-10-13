@@ -10,7 +10,7 @@ import { confirmSheet } from './sheets.jsx'
 import {
   balance, redeem, canRedeem,
   rewardsCatalog, redemptionHistory,
-  rulesOf, targetForWeek, DEFAULT_RULES, entries, pointsByType, achievements,
+  rulesOf, targetForWeek, isRestWeek, DEFAULT_RULES, entries, pointsByType, achievements,
   dashboardStats, program
 } from './lib/gamification/index.js'
 
@@ -380,19 +380,32 @@ function WeekGoal({ weekKey, close }) {
   const S = useStore(s => s.S)
   const base = rulesOf(S).weeklyTarget
   const [n, setN] = useState(targetForWeek(S, weekKey))
-  const custom = targetForWeek(S, weekKey) !== base
+  const [rest, setRest] = useState(isRestWeek(S, weekKey))
+  const custom = targetForWeek(S, weekKey) !== base || isRestWeek(S, weekKey)
   const save = () => {
-    editGam(g => { g.weekTargets = { ...(g.weekTargets || {}), [weekKey]: Math.max(1, Math.round(+n || 1)) } })
+    editGam(g => {
+      g.weekTargets = { ...(g.weekTargets || {}), [weekKey]: Math.max(1, Math.round(+n || 1)) }
+      g.restWeeks = { ...(g.restWeeks || {}) }
+      if (rest) g.restWeeks[weekKey] = true; else delete g.restWeeks[weekKey]
+    })
     close(); toast(t('Goal updated'))
   }
   const clear = () => {
-    editGam(g => { if (g.weekTargets) delete g.weekTargets[weekKey] })
+    editGam(g => {
+      if (g.weekTargets) delete g.weekTargets[weekKey]
+      if (g.restWeeks) delete g.restWeeks[weekKey]
+    })
     close(); toast(t('Using your general goal'))
   }
   return <>
     <h3>{t('This week’s goal')}</h3>
     <div className="muted small" style={{ marginBottom: 10 }}>{t('General goal: {0} sessions.', base)}</div>
     <Stepper value={n} step={1} decimal={false} label={t('Sessions')} unit={t('this week')} onChange={setN} />
+    <div className="row between" style={{ marginTop: 14 }}>
+      <span>{t('Rest week')}</span>
+      <Switch checked={rest} onChange={setRest} />
+    </div>
+    <div className="dim small" style={{ marginTop: 4 }}>{t('A rest week doesn’t count and doesn’t break your streak.')}</div>
     <div style={{ height: 12 }} />
     <Button variant="primary" icon="check" onClick={save}>{t('Save')}</Button>
     {custom && <><div style={{ height: 8 }} /><Button variant="ghost" className="dim" onClick={clear}>{t('Use the general goal')}</Button></>}
@@ -458,14 +471,15 @@ function Program({ close }) {
     <div className="list">
       {p.weeks.map(w => {
         const target = targetForWeek(S, w.weekKey)
+        const active = w.fulfilled || w.rest
         return (
-          <div key={w.weekKey} className={'item' + (w.fulfilled ? '' : ' dim')}>
+          <div key={w.weekKey} className={'item' + (active ? '' : ' dim')}>
             <span className="lrow-i" style={w.fulfilled ? { background: 'var(--acc-soft)', color: 'var(--acc)' } : { background: 'var(--surface-2)' }}>
-              <Icon name={w.fulfilled ? 'check' : 'calendar'} />
+              <Icon name={w.rest ? 'moon' : w.fulfilled ? 'check' : 'calendar'} />
             </span>
             <div className="grow">
               <div className="tt">{w.weekKey}</div>
-              <div className="ss">{t('{0} of {1} sessions', w.count, target)}</div>
+              <div className="ss">{w.rest ? t('Rest week') : t('{0} of {1} sessions', w.count, target)}</div>
             </div>
             {w.fulfilled && <Icon name="check" className="accent" />}
           </div>

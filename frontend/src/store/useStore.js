@@ -17,7 +17,7 @@ export const DEF = {
   //   rules   — optional overrides of the scoring defaults (see gamification/rules.js)
   //   ledger  — append-only, idempotent list of point movements
   //   rewards — the user's own reward catalog
-  gam: { rules: null, ledger: [], rewards: [] },
+  gam: { rules: null, ledger: [], rewards: [], weekTargets: {}, restWeeks: {} },
   // effort: which per-set effort scale is logged — 'none' | 'rir' | 'rpe'. null, not 'none', so
   // that a profile which never chose (loaded state is overlaid on DEF, on every path: local,
   // server pull, backup import) still falls back to the `showRir` boolean this replaced and
@@ -29,6 +29,8 @@ export const DEF = {
   autoSpeak: true,
   // Optional exact voice name for speech ('' = automatic/local best).
   speakVoice: null,
+  // Announce the last seconds of the rest timer aloud (off by default).
+  speakRest: false,
   // Nudge (toast + system notification) when one session is left to hit the week.
   gamNudge: true
 }

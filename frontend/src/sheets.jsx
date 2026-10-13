@@ -13,7 +13,7 @@ import { PLAN_TEMPLATES, buildTemplate } from './lib/plans.js'
 import Media, { Thumb } from './components/Media.jsx'
 import Stepper from './components/Stepper.jsx'
 import Icon from './components/Icon.jsx'
-import { Button, Slider, Switch, Segmented, SelectRow, Row } from './components/ui.jsx'
+import { Button, Slider, Switch, Segmented, SelectRow, Row, TextField } from './components/ui.jsx'
 import { glyphOf, GLYPH_GROUPS, DEFAULT_GLYPH } from './lib/glyphs.js'
 import BodyMap from './components/BodyMap.jsx'
 import { loadOfWorkouts } from './lib/muscles.js'
@@ -821,6 +821,7 @@ function WorkoutDetail({ w, close }) {
   const st = useStore(s => s.S)
   // Read the live workout so tapping a set updates this sheet immediately.
   const live = st.workouts.find(x => x.id === w.id) || w
+  const [note, setNote] = useState(live.note || '')
 
   // Correcting a saved session: flip a set's `done`, recompute volume, then let the
   // reconciler move the session's net points to match its new validity. The session
@@ -865,6 +866,11 @@ function WorkoutDetail({ w, close }) {
       </div>
     })}
     <div className="muted small" style={{ marginBottom: 10 }}>{t('Tap a set to mark it done or not done — your points adjust automatically.')}</div>
+    <label className="sect-t" htmlFor="w-note">{t('Note')}</label>
+    <TextField id="w-note" value={note} maxLength={280} placeholder={t('How did it feel? (optional)')}
+      onChange={e => setNote(e.target.value)}
+      onBlur={() => update(s => { const x = s.workouts.find(y => y.id === w.id); if (x) x.note = note.trim() })} />
+    <div style={{ height: 12 }} />
     <Button variant="danger" onClick={() => confirmSheet({ title: t('Delete workout?'), message: t('This removes it from your history for good.'), confirmText: t('Delete'), danger: true, onConfirm: () => { update(s => {
       s.workouts = s.workouts.filter(x => x.id !== w.id)
       // GYMPACT: deleting a session never erases its ledger history — it appends a
@@ -1086,7 +1092,8 @@ function doFinishWorkout() {
   beep(snd(), 880, 0.15); beep(snd(), 1100, 0.15, 0.18); beep(snd(), 1320, 0.3, 0.36)
   // GYMPACT: nudge when finishing this session leaves exactly one to the weekly goal.
   const fresh = S()
-  if (fresh.gamNudge !== false && dashboardStats(fresh).remainingToGoal === 1) {
+  const fstats = dashboardStats(fresh)
+  if (fresh.gamNudge !== false && !fstats.restWeek && fstats.remainingToGoal === 1) {
     const msg = t('One session left to hit this week’s goal 💪')
     toast(msg)
     notifyNow('GYMPACT', msg, 'week-nudge')

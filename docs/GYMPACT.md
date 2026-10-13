@@ -24,7 +24,9 @@ de *Restablecer valores por defecto*. Los cambios solo afectan a puntos futuros:
 movimiento guarda la `ruleVersion` con la que se calculó.
 Además, desde el **dashboard** puedes editar la **meta de una semana concreta**
 (una semana ligera), que se guarda en `S.gam.weekTargets[weekKey]` y solo afecta a esa
-semana (incluido cuándo se concede el bonus semanal).
+semana (incluido cuándo se concede el bonus semanal). En el mismo editor puedes marcar
+la semana como **descanso** (`S.gam.restWeeks`): **no cuenta y no rompe la racha ni el
+ciclo** — la racha simplemente la salta. Pensado para vacaciones, enfermedad o descarga.
 
 ## Qué es una "sesión válida"
 
@@ -139,6 +141,8 @@ o se fuerza en Ajustes → *Voz de los ejercicios* (`Auto` / `EN` / `ES` / `Off`
 las instrucciones localizadas cuando están disponibles (español), con el nombre del
 ejercicio tal cual (los nombres del catálogo son en inglés). En iOS Safari la voz
 requiere el gesto del toque, así que solo habla cuando pulsas el botón.
+Opcionalmente, con *Cuenta atrás hablada* activada, anuncia los **10, 3, 2 y 1**
+segundos del temporizador de descanso.
 
 ## Programa de varias semanas y compartir
 
@@ -150,8 +154,13 @@ requiere el gesto del toque, así que solo habla cuando pulsas el botón.
 - **Meta al empezar**: la tarjeta de bienvenida (sin rutinas) permite elegir la meta
   semanal (2–5) antes de cargar un plan.
 
-## Backups y compatibilidad
+## Notas por sesión
 
+En el detalle de un entrenamiento guardado hay un campo de **nota** opcional
+(`w.note`), editable a posteriori. Sirve para recordar sensaciones o incidencias y no
+afecta a la puntuación (los puntos dependen de la validez, no del contenido).
+
+## Backups y compatibilidad
 - Export/import de Settings incluye `gam` (el ledger y las recompensas viajan con
   el resto).
 - Un backup **antiguo** (sin `gam`) se importa sin problema: los defaults

@@ -7,7 +7,7 @@
 // both compute "session X happened" produce the same key, so the second one is a
 // no-op instead of a duplicate 100 points.
 
-import { rulesOf, isValidSession, targetForWeek } from './rules.js'
+import { rulesOf, isValidSession, targetForWeek, restWeeks } from './rules.js'
 import {
   instantOf, sessionWeekKey, fulfilledWeekKeys
 } from './weekly-goals.js'
@@ -64,7 +64,7 @@ export function eventsForFinishedWorkout(S, workout) {
   const fulfilled = fulfilledWeekKeys(S.workouts, tz, k => targetForWeek(S, k))
   if (fulfilled.has(wk)) {
     out.push(weekBonusEvent(wk, rules))
-    const run = consecutiveEndingAt(fulfilled, wk)
+    const run = consecutiveEndingAt(fulfilled, wk, restWeeks(S))
     // A 4-week cycle is banked each time the run reaches a multiple of cycleWeeks
     // (4, 8, 12…), keyed by the week that completed it, so it is granted once.
     if (run > 0 && run % rules.cycleWeeks === 0) out.push(cycleBonusEvent(wk, rules))

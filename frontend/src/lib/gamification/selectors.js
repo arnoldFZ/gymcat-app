@@ -1,7 +1,7 @@
 // GYMPACT — read-only selectors that turn raw state into what the UI shows.
 // Pure and deterministic given `now`; the views never compute points themselves.
 
-import { rulesOf, targetForWeek } from './rules.js'
+import { rulesOf, targetForWeek, restWeeks } from './rules.js'
 import { currentWeekKey, countInWeek, fulfilledWeekKeys, validSessions } from './weekly-goals.js'
 import { streakOfFulfilled, shiftWeekKey } from './streaks.js'
 import { balance, pointsEarnedInWeek, entries } from './ledger.js'
@@ -14,7 +14,7 @@ export function cycleProgress(S, now) {
   const rules = rulesOf(S)
   const tz = rules.tz
   const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, k => targetForWeek(S, k))
-  const streak = streakOfFulfilled(fulfilled, currentWeekKey(tz, now))
+  const streak = streakOfFulfilled(fulfilled, currentWeekKey(tz, now), restWeeks(S))
   const into = streak > 0 ? ((streak - 1) % rules.cycleWeeks) + 1 : 0
   return {
     streak,
@@ -46,12 +46,19 @@ export function bestStreak(S, now) {
   const rules = rulesOf(S)
   const tz = rules.tz
   const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, k => targetForWeek(S, k))
+  const rest = restWeeks(S)
   if (!fulfilled.size) return 0
   let best = 0
   for (const wk of fulfilled) {
-    if (fulfilled.has(shiftWeekKey(wk, -1))) continue    // only start counting at a run's first week
-    let n = 0, k = wk
-    while (fulfilled.has(k)) { n++; k = shiftWeekKey(k, 1) }
+    const prev = shiftWeekKey(wk, -1)
+    if (fulfilled.has(prev) || rest.has(prev)) continue    // only start at a run's first week
+    let n = 0, k = wk, guard = 0
+    while (guard++ < 1000) {
+      if (fulfilled.has(k)) n++
+      else if (rest.has(k)) { /* planned rest: step over */ }
+      else break
+      k = shiftWeekKey(k, 1)
+    }
     if (n > best) best = n
   }
   return best
@@ -88,7 +95,8 @@ export function achievements(S, now) {
 // the progress toward the cycle bonus. Powers the "4-week program" sheet.
 export function program(S, now) {
   const rules = rulesOf(S)
-  const weeks = recentWeeks(S, rules.cycleWeeks, now)
+  const rest = restWeeks(S)
+  const weeks = recentWeeks(S, rules.cycleWeeks, now).map(w => ({ ...w, rest: rest.has(w.weekKey) }))
   const cyc = cycleProgress(S, now)
   return {
     weeks,
@@ -108,6 +116,7 @@ export function dashboardStats(S, now) {
   const sessions = countInWeek(S && S.workouts, wk, tz)
   const ledger = S && S.gam && S.gam.ledger
   const fulfilled = fulfilledWeekKeys(S && S.workouts, tz, k => targetForWeek(S, k))
+  const rest = restWeeks(S)
   return {
     weekKey: wk,
     sessions,
@@ -115,9 +124,10 @@ export function dashboardStats(S, now) {
     goalMet: sessions >= target,
     remainingToGoal: Math.max(0, target - sessions),
     customGoal: target !== rules.weeklyTarget,
+    restWeek: rest.has(wk),
     balance: balance(ledger),
     earnedThisWeek: pointsEarnedInWeek(ledger, wk, tz),
-    streak: streakOfFulfilled(fulfilled, wk),
+    streak: streakOfFulfilled(fulfilled, wk, rest),
     bestStreak: bestStreak(S, now),
     fulfilledWeeks: fulfilled.size,
     nextReward: nextReward(S),

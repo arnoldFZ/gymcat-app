@@ -36,22 +36,38 @@ export function shiftWeekKey(weekKey, delta) {
 }
 
 // Consecutive fulfilled weeks ending exactly at `weekKey` (which must itself be
-// fulfilled, otherwise 0). This is the run a newly fulfilled week completes.
-export function consecutiveEndingAt(fulfilledSet, weekKey) {
+// fulfilled, otherwise 0). `restSet` weeks are stepped over without counting or
+// breaking. This is the run a newly fulfilled week completes (cycle bonus).
+export function consecutiveEndingAt(fulfilledSet, weekKey, restSet) {
   let n = 0
   let k = weekKey
-  while (fulfilledSet.has(k)) {
-    n++
+  let guard = 0
+  while (guard++ < 1000) {
+    if (fulfilledSet.has(k)) n++
+    else if (restSet && restSet.has(k)) { /* planned rest: step over */ }
+    else break
     k = shiftWeekKey(k, -1)
   }
   return n
 }
 
-// The streak shown on the dashboard: consecutive fulfilled weeks ending at the
-// current week if it is already fulfilled, otherwise ending at last week (an
-// in-progress week doesn't reset anything).
-export function streakOfFulfilled(fulfilledSet, currentWeek) {
+// The streak shown on the dashboard: consecutive fulfilled weeks counting back from
+// the current week. An in-progress current week doesn't reset anything, and a planned
+// rest week (`restSet`) is stepped over without counting or breaking.
+export function streakOfFulfilled(fulfilledSet, currentWeek, restSet) {
   if (!fulfilledSet || !fulfilledSet.size) return 0
-  let k = fulfilledSet.has(currentWeek) ? currentWeek : shiftWeekKey(currentWeek, -1)
-  return consecutiveEndingAt(fulfilledSet, k)
+  let n = 0
+  let k = currentWeek
+  let first = true
+  let guard = 0
+  while (guard++ < 1000) {
+    if (fulfilledSet.has(k)) n++
+    else if (restSet && restSet.has(k)) { /* step over */ }
+    else if (!first) break
+    // first week that is neither fulfilled nor rest: the current week in progress —
+    // don't count it and don't let it break the run; keep walking back from it.
+    first = false
+    k = shiftWeekKey(k, -1)
+  }
+  return n
 }

@@ -757,4 +757,11 @@ export default {
   'Achievements: {0} of {1}': 'Logros: {0} de {1}',
   'Progress copied to the clipboard': 'Progreso copiado al portapapeles',
   'Start your {0}-week program': 'Empieza tu programa de {0} semanas',
+  'Ten seconds': 'Diez segundos',
+  'Rest week': 'Semana de descanso',
+  'A rest week doesn’t count and doesn’t break your streak.': 'Una semana de descanso no cuenta y no rompe tu racha.',
+  'Note': 'Nota',
+  'How did it feel? (optional)': '¿Cómo te fue? (opcional)',
+  'Spoken rest countdown': 'Cuenta atrás hablada',
+  'Announce the last 10, 3, 2 and 1 seconds of rest.': 'Anuncia los últimos 10, 3, 2 y 1 segundos de descanso.',
 }

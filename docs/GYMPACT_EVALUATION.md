@@ -58,6 +58,8 @@ pesos, descansos, historial, PWA y passkeys ya existían y no se reescribieron.
   cerrada** (servidor, a la hora del recordatorio).
 - **Programa de N semanas**, **compartir progreso** (share/clipboard) y **meta al
   empezar** desde la bienvenida.
+- **Semana de descanso** que no rompe la racha, **notas por sesión** y **cuenta atrás
+  hablada** del descanso.
 - **Idiomas principales: inglés y español**, ambos **100% completos** (claves nuevas
   y cadenas preexistentes de demo/self-host). El resto de idiomas siguen
   disponibles y caen a inglés en lo no traducido.

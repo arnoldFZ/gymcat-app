@@ -34,6 +34,18 @@ export function targetForWeek(S, weekKey) {
   return Number.isFinite(n) && n > 0 ? Math.round(n) : rulesOf(S).weeklyTarget
 }
 
+// Weeks the user marked as planned rest (`S.gam.restWeeks`). A rest week is not a
+// failure: it neither grants the weekly bonus nor breaks the streak/cycle — the run
+// simply steps over it. This protects constancy from punishing a deliberate break
+// (holiday, illness, deload).
+export function restWeeks(S) {
+  const r = S && S.gam && S.gam.restWeeks
+  return r ? new Set(Object.keys(r).filter(k => r[k])) : new Set()
+}
+export function isRestWeek(S, weekKey) {
+  return restWeeks(S).has(weekKey)
+}
+
 // A session only counts when it was finished and actually logged something:
 // at least one exercise entry with at least one completed set. This mirrors how
 // `doFinishWorkout` builds a workout (entries are filtered to those with a done

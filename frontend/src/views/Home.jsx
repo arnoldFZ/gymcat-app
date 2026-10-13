@@ -64,8 +64,8 @@ export default function Home() {
       <div className="row" style={{ gap: 8, alignItems: 'baseline' }}>
         <div className="big">{gam.sessions}<span className="muted" style={{ fontSize: '1.05rem', fontWeight: 500 }}>{' / ' + gam.target}</span></div>
         <span className="small muted">{t('valid sessions')}</span>
-        <Button size="sm" icon="target" style={{ marginLeft: 'auto' }} onClick={() => weekGoalSheet(gam.weekKey)}>
-          {gam.goalMet ? t('Goal met!') : t('{0} to go', gam.remainingToGoal)}
+        <Button size="sm" icon={gam.restWeek ? 'moon' : 'target'} style={{ marginLeft: 'auto' }} onClick={() => weekGoalSheet(gam.weekKey)}>
+          {gam.restWeek ? t('Rest week') : gam.goalMet ? t('Goal met!') : t('{0} to go', gam.remainingToGoal)}
         </Button>
       </div>
       <div className="gbar" role="progressbar" aria-valuenow={gam.sessions} aria-valuemin="0" aria-valuemax={gam.target} aria-label={t('Weekly goal progress')}>

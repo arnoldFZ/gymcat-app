@@ -10,7 +10,7 @@ import {
   reconcileSessionEvents, familyNet,
   activeRewards, canRedeem, nextReward, tryRedeem, redemptionHistory,
   dashboardStats, recentWeeks, complianceRate, cycleProgress, lastSession, pointsByType, targetForWeek,
-  bestStreak, achievements, program
+  bestStreak, achievements, program, restWeeks
 } from '../index.js'
 
 /* ------------------------------------------------------------------ helpers */
@@ -419,7 +419,31 @@ describe('cycle progress, last session, points breakdown', () => {
   })
 })
 
-/* -------------------------------------------------- backwards compatibility */describe('records and achievements', () => {
+/* -------------------------------------------------- backwards compatibility */describe('rest weeks', () => {
+  it('a planned rest week does not break the streak', () => {
+    const fulfilled = new Set(['2026-W02', '2026-W04'])
+    // Without a rest week, W03 breaks the run → streak 1 at W04.
+    expect(streakOfFulfilled(fulfilled, '2026-W04')).toBe(1)
+    // Marking W03 as rest steps over it → streak 2.
+    expect(streakOfFulfilled(fulfilled, '2026-W04', new Set(['2026-W03']))).toBe(2)
+  })
+
+  it('consecutiveEndingAt steps over rest weeks', () => {
+    const fulfilled = new Set(['2026-W02', '2026-W04', '2026-W05'])
+    expect(consecutiveEndingAt(fulfilled, '2026-W05', new Set(['2026-W03']))).toBe(3)
+    expect(consecutiveEndingAt(fulfilled, '2026-W05')).toBe(2)
+  })
+
+  it('restWeeks reads the flag set', () => {
+    const S = { gam: { restWeeks: { '2026-W03': true, '2026-W09': false } } }
+    const r = restWeeks(S)
+    expect(r.has('2026-W03')).toBe(true)
+    expect(r.has('2026-W09')).toBe(false)
+    expect(restWeeks({}).size).toBe(0)
+  })
+})
+
+describe('records and achievements', () => {
   it('program reports the last cycleWeeks weeks and progress', () => {
     const S = emptyS()
     for (const wk of [0, 1]) for (const w of weekOf(0, wk)) S.workouts.push(w)   // W02, W03 fulfilled

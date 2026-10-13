@@ -175,6 +175,11 @@ export default function Settings() {
             ...listVoices(speechLangs(S).tag).map(v => ({ value: v.name, label: v.name + ' · ' + v.lang + (v.localService ? '' : ' · ' + t('online')) }))]}
           onChange={v => update(s => { s.speakVoice = v || null })} />
       )}
+      {isSpeechSupported() && (S.speakLang || 'app') !== 'off' && (
+        <Row icon="timer" iconTint="var(--orange)" title={t('Spoken rest countdown')} subtitle={t('Announce the last 10, 3, 2 and 1 seconds of rest.')}>
+          <Switch checked={S.speakRest === true} onChange={v => update(s => { s.speakRest = v })} />
+        </Row>
+      )}
     </Section>
 
     {(user || MOBILE) && <NotificationsCard S={S} update={update} toast={toast} />}

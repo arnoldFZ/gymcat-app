@@ -182,6 +182,7 @@ setInterval(() => {
     if (!S.reminder || !S.reminder.on || S.reminder.time !== now.hhmm) continue;
     if (user.lastNudge === now.date) continue;
     const week = weekKeyFromInstant(Date.now(), tz);
+    if (S.gam && S.gam.restWeeks && S.gam.restWeeks[week]) continue;   // planned rest week
     const target = +((S.gam && S.gam.weekTargets && S.gam.weekTargets[week]) || (S.gam && S.gam.rules && S.gam.rules.weeklyTarget) || 3);
     const count = (S.workouts || []).filter(isValidSession).filter(w => weekKeyFromInstant(workoutInstant(w), tz) === week).length;
     if (count !== target - 1) continue;   // already done, or more than one to go

@@ -1,6 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useUI } from '../store/useUI.js'
+import { useStore } from '../store/useStore.js'
 import { t } from '../lib/i18n.js'
+import { speak, speechLangs, isSpeechSupported } from '../lib/speech.js'
 import { Button } from './ui.jsx'
 
 const clock = sec => Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0')
@@ -14,6 +16,22 @@ export default function RestTimer() {
   const work = useUI(s => s.work)
   const { addRest, stopRest, finishWorkEarly, stopWork } = useUI()
   const on = work || timer
+  const S = useStore(s => s.S)
+  const lastSpoken = useRef(null)
+
+  // Optional spoken rest countdown (GYMPACT voice): announce 10s and the last 3 seconds.
+  const restLeft = timer ? Math.ceil(timer.left) : null
+  useEffect(() => {
+    if (restLeft == null || S.speakRest !== true || S.speakLang === 'off' || !isSpeechSupported()) return
+    if (lastSpoken.current === restLeft) return
+    lastSpoken.current = restLeft
+    const { tag } = speechLangs(S)
+    if (restLeft === 10) speak(t('Ten seconds'), tag, S.speakVoice)
+    else if (restLeft === 3 || restLeft === 2 || restLeft === 1) speak(String(restLeft), tag, S.speakVoice)
+  }, [restLeft])
+  // New rest → forget what was announced.
+  useEffect(() => { lastSpoken.current = null }, [timer && timer.total])
+
   // The bar is fixed above the tab bar and floats over whatever is beneath it — during a
   // rest that was the next set's row. Extra bottom padding lets the page scroll clear.
   useEffect(() => {
