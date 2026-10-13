@@ -23,6 +23,15 @@ export function isSpeechSupported() {
     typeof window.SpeechSynthesisUtterance === 'function'
 }
 
+// True on iPhone/iPad (incl. iPadOS reporting as Mac). Used only to show the
+// silent-switch hint: on iOS the voice is muted by the hardware switch through the
+// built-in speaker, which is a very common "it doesn't work" report.
+export function isIOS() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent || ''
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1)
+}
+
 // Which voice to use: an explicit profile choice ('en'/'es') wins, otherwise the app
 // language (es → Spanish, anything else → English).
 export function speechLangs(S) {
@@ -101,15 +110,58 @@ function reportError(u, e) {
   if (code && code !== 'interrupted' && code !== 'canceled' && errorHandler) errorHandler(code)
 }
 
+/* ---------- iOS audio-session unlock (best effort) ---------- */
+// On iOS Safari the Web Audio / speech session is muted by the hardware SILENT switch
+// when the phone plays through its built-in speaker — but an HTML5 <audio> element is
+// NOT. So, on the same user gesture, we (a) resume an AudioContext and (b) play a tiny
+// looping silent clip through an <audio> element, which pulls the session into a state
+// where the voice is audible without headphones. It cannot override the switch itself;
+// it is a nudge, not a guarantee. The clip is paused again when speech ends so no
+// media indicator lingers.
+const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA='
+let audioCtx = null
+let silentEl = null
+
+export function wakeAudioSession() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext
+    if (AC) {
+      if (!audioCtx) audioCtx = new AC()
+      if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') audioCtx.resume()
+      const b = audioCtx.createBuffer(1, 1, 22050)
+      const s = audioCtx.createBufferSource()
+      s.buffer = b; s.connect(audioCtx.destination); s.start(0)
+    }
+  } catch { /* not fatal */ }
+  try {
+    if (!silentEl) {
+      silentEl = document.createElement('audio')
+      silentEl.setAttribute('playsinline', '')
+      silentEl.setAttribute('aria-hidden', 'true')
+      silentEl.loop = true
+      silentEl.volume = 0.001          // effectively silent, still opens the session
+      silentEl.src = SILENT_WAV
+    }
+    const p = silentEl.play()
+    if (p && p.catch) p.catch(() => {})
+  } catch { /* not fatal */ }
+}
+function pauseSilent() {
+  try { if (silentEl && !silentEl.paused) silentEl.pause() } catch { /* */ }
+}
+
 export function stopSpeaking() {
   if (isSpeechSupported()) { try { window.speechSynthesis.cancel() } catch { /* */ } }
   current = null
+  pauseSilent()
 }
 
 // Speak `text` with the voice for `tag`. Returns true when the call was issued.
 // Must be invoked from a user gesture on iOS.
 export function speak(text, tag, voiceName) {
   if (!isSpeechSupported() || !text) return false
+  wakeAudioSession()            // must run inside the user gesture (iOS)
   const synth = window.speechSynthesis
   let attempt = 0
 
@@ -121,8 +173,8 @@ export function speak(text, tag, voiceName) {
     u.rate = 1
     u.pitch = 1
     u.volume = 1
-    u.onend = () => { if (current === u) current = null }
-    u.onerror = e => reportError(u, e)
+    u.onend = () => { if (current === u) current = null; pauseSilent() }
+    u.onerror = e => { reportError(u, e); pauseSilent() }
     // Hold a reference: browsers can garbage-collect a detached utterance and then
     // simply never play it.
     current = u

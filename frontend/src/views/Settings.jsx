@@ -13,7 +13,7 @@ import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
 import { plansSheet, confirmSheet, importFromApp } from '../sheets.jsx'
 import { rewardsSheet, rulesSheet, ledgerSheet } from '../gamification.jsx'
 import { rulesOf } from '../lib/gamification/index.js'
-import { isSpeechSupported, speakTest, voiceCount, listVoices, speechLangs } from '../lib/speech.js'
+import { isSpeechSupported, speakTest, voiceCount, listVoices, speechLangs, isIOS } from '../lib/speech.js'
 import Icon from '../components/Icon.jsx'
 import { Section, Row, SelectRow, Switch, Segmented, Button, TextField } from '../components/ui.jsx'
 
@@ -153,7 +153,7 @@ export default function Settings() {
           options={[{ value: 'none', label: t('Off') }, { value: 'rir', label: t('RIR') }, { value: 'rpe', label: t('RPE') }]}
           value={effortOf(S)} onChange={v => update(s => { s.effort = v; delete s.showRir })} />
       </Row>
-      <Row icon="speaker" iconTint="var(--blue)" title={t('Exercise voice')} subtitle={isSpeechSupported() ? t('Read instructions aloud.') : t('Not supported in this browser.')}>
+      <Row icon="speaker" iconTint="var(--blue)" title={t('Exercise voice')} subtitle={!isSpeechSupported() ? t('Not supported in this browser.') : isIOS() ? t('Read instructions aloud. On iPhone, turn off the silent switch if you hear nothing.') : t('Read instructions aloud.')}>
         <div className="row" style={{ gap: 8 }}>
           {isSpeechSupported() && <Button size="sm" icon="play" onClick={() => {
             const info = speakTest(S)

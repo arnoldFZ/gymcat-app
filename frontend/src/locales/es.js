@@ -764,4 +764,5 @@ export default {
   'How did it feel? (optional)': '¿Cómo te fue? (opcional)',
   'Spoken rest countdown': 'Cuenta atrás hablada',
   'Announce the last 10, 3, 2 and 1 seconds of rest.': 'Anuncia los últimos 10, 3, 2 y 1 segundos de descanso.',
+  'Read instructions aloud. On iPhone, turn off the silent switch if you hear nothing.': 'Lee las instrucciones en voz alta. En iPhone, quita el modo silencio si no oyes nada.',
 }
