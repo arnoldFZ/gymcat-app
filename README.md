@@ -175,6 +175,9 @@ A real install (offline, no Safari chrome, no dependence on the dev server) need
 served over **HTTPS** — self-host with a domain (see [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md))
 or a tunnel. Over plain `http://` on the LAN it still works as a full-screen shortcut.
 
+Want it online with no server to run? Deploy the static build to **GitHub + Cloudflare
+Pages** — full walkthrough in **[docs/DEPLOY.md](docs/DEPLOY.md)** (`npm run build:web`).
+
 ## Your dataLives in `./data` on your host: `db.json` (profiles + public passkeys), `state-<user>.json`
 (each user's plan, workouts, body weight, settings), and `secret` (the session-cookie key).
 **Back up `./data` and you've backed up everything.** Passkey private keys never touch the

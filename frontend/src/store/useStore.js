@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { api } from '../lib/api.js'
 import { localTZ } from '../lib/format.js'
 import { registerCustom } from '../lib/exercises.js'
-import { DEMO, DEMO_SEEDED } from '../lib/demo.js'
+import { DEMO, DEMO_SEEDED, STATIC } from '../lib/demo.js'
 import { MOBILE, nativeLoad, nativeSave, syncReminder } from '../lib/mobile.js'
 
 const KEY = 'gym_state_v1'
@@ -185,6 +185,12 @@ export const useStore = create((set, get) => {
           localStorage.setItem(DEMO_SEEDED, '1')
           await get().resetDemo()
         }
+        get().setGuest(true)
+        set({ ready: true })
+        return
+      }
+      // Static web build (no server): straight into a local guest profile, no seed.
+      if (STATIC) {
         get().setGuest(true)
         set({ ready: true })
         return

@@ -11,4 +11,8 @@
 // lands in a self-hosted bundle.
 export const DEMO = import.meta.env.VITE_DEMO === '1'
 export const DEMO_SEEDED = 'gym_demo_seeded_v1'
+// Static web build (no server at all): boots straight into a local guest profile and
+// never calls /api — for hosting the app as a plain static site (GitHub + Cloudflare
+// Pages). Unlike DEMO it does NOT seed example data, so it starts empty and yours.
+export const STATIC = import.meta.env.VITE_STATIC === '1'
 export const REPO = 'https://github.com/DuarteSantos8/openGym'
