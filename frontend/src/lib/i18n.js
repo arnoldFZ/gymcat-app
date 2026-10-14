@@ -12,10 +12,10 @@ export const LANGS = {
   ko: '한국어', hi: 'हिन्दी'
 }
 export const INSTR_LANGS = ['en', 'es', 'fr', 'it', 'tr', 'ru', 'zh', 'hi', 'pl', 'ko']
-// Languages the product actively offers. English and Spanish are the maintained
-// pair; the other locale packs stay on disk and keep working for a profile that had
-// already selected one, but they are no longer advertised in the picker.
-export const PRIMARY_LANGS = { en: 'English', es: 'Español' }
+// Languages the product actively offers. Spanish and English are the maintained pair
+// (Spanish first — it's the default UI language); the other locale packs stay on disk
+// and keep working for a profile that had already selected one, but are not advertised.
+export const PRIMARY_LANGS = { es: 'Español', en: 'English' }
 const DATE_LOCALES = {
   en: 'en-GB', de: 'de-DE', es: 'es-ES', fr: 'fr-FR', it: 'it-IT', pt: 'pt-PT',
   pl: 'pl-PL', tr: 'tr-TR', ru: 'ru-RU', zh: 'zh-CN', ko: 'ko-KR', hi: 'hi-IN'
@@ -24,7 +24,7 @@ const DATE_LOCALES = {
 const localePacks = import.meta.glob('../locales/*.js')
 const instrPacks = import.meta.glob('../instr/*.js')
 
-let lang = 'en'
+let lang = 'en'   // pre-load sentinel; the profile's language (default 'es') takes over on boot
 let dict = {}
 let loaded = false          // dict actually corresponds to `lang` (not just requested)
 let instr = null            // { exId: [steps] } for the current language, null = English
@@ -34,7 +34,7 @@ const subs = new Set()
 const notify = () => { version++; subs.forEach(f => f()) }
 
 export const getLang = () => lang
-export const isLangReady = l => (l || 'en') === lang && loaded
+export const isLangReady = l => (l || 'es') === lang && loaded
 export const dateLocale = () => DATE_LOCALES[lang] || 'en-GB'
 
 // Translate a source string; {0},{1}… are replaced with args (also on the English fallback).
@@ -57,7 +57,7 @@ let retryTimer = null
 //   2. The (large) instruction pack is loaded in its OWN try/catch — its failure can
 //      never wipe the UI dict, which used to turn the whole app English.
 export async function setLang(l, attempt = 0) {
-  if (!LANGS[l]) l = 'en'
+  if (!LANGS[l]) l = 'es'
   if (l === lang && loaded) return
   const my = ++gen
   lang = l

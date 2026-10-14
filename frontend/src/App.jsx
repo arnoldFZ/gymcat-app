@@ -45,18 +45,18 @@ function Shell() {
   const langV = useLang()   // re-renders the whole shell when the language (pack) changes
   useEffect(() => { setNav(navigate) }, [navigate])
   useEffect(() => { applyPrefs(S.theme, S.accent) }, [S.theme, S.accent])
-  useEffect(() => { setLang(S.lang || 'en') }, [S.lang])
+  useEffect(() => { setLang(S.lang || 'es') }, [S.lang])
   // Self-heal a language that failed to load (offline, a flaky chunk, a module reload):
   // re-apply it whenever the app returns to the foreground or the network comes back.
   // Without this, a profile stuck with `lang:'es'` but an empty dict stayed English
   // forever, because `S.lang` never changed again and nothing retried.
   useEffect(() => {
-    const reapply = () => { if (document.visibilityState === 'visible') ensureLang(S.lang || 'en') }
+    const reapply = () => { if (document.visibilityState === 'visible') ensureLang(S.lang || 'es') }
     document.addEventListener('visibilitychange', reapply)
     window.addEventListener('online', reapply)
     return () => { document.removeEventListener('visibilitychange', reapply); window.removeEventListener('online', reapply) }
   }, [S.lang])
-  useEffect(() => { document.documentElement.lang = S.lang || 'en' }, [langV, S.lang])
+  useEffect(() => { document.documentElement.lang = S.lang || 'es' }, [langV, S.lang])
   // every tab/route change starts at the top of the page
   useEffect(() => { window.scrollTo(0, 0) }, [loc.pathname])
   // bound to the workout, not to the route — checking Stats mid-session keeps the screen on

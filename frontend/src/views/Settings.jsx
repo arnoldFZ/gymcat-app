@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore, DEF, hasData } from '../store/useStore.js'
 import { useUI } from '../store/useUI.js'
-import { ACCENTS, todayISO, localTZ } from '../lib/format.js'
+import { ACCENTS, localTZ } from '../lib/format.js'
 import { effortOf } from '../lib/history.js'
 import { api, webauthnOK, passkeyLogin, passkeyRegister, IS_ANDROID } from '../lib/api.js'
 import { pushSupported, enablePush, disablePush, sendTestPush } from '../lib/push.js'
 import { wakeLockSupported } from '../lib/wakelock.js'
 import { t, PRIMARY_LANGS, INSTR_LANGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
-import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
+import { MOBILE, syncReminder } from '../lib/mobile.js'
+import { downloadBackup } from '../lib/backup.js'
 import { plansSheet, confirmSheet, importFromApp, installHelpSheet } from '../sheets.jsx'
 import { isStandalone, canPrompt, promptInstall, useInstall } from '../lib/install.js'
 import { rewardsSheet, rulesSheet, ledgerSheet } from '../gamification.jsx'
@@ -31,17 +32,8 @@ export default function Settings() {
 
   const markBackedUp = () => update(s => { s.lastBackup = Date.now() })
   const doExport = async () => {
-    const json = JSON.stringify(S, null, 2)
-    const name = 'gymcat-backup-' + todayISO() + '.json'
-    // WKWebView can't download blob URLs — the native build hands the file to the share sheet.
-    if (MOBILE) {
-      try { await shareExport(json, name); markBackedUp(); toast(t('Backup exported')) } catch (e) { /* share sheet dismissed */ }
-      return
-    }
-    const blob = new Blob([json], { type: 'application/json' })
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); URL.revokeObjectURL(a.href)
-    markBackedUp()
-    toast(t('Backup exported'))
+    const ok = await downloadBackup(S)
+    if (ok) { markBackedUp(); toast(t('Backup exported')) }
   }
   const doImport = ev => {
     const f = ev.target.files[0]; if (!f) return
@@ -109,7 +101,7 @@ export default function Settings() {
     <Section title={t('General')} footer={t('Note: switching units only changes the label — logged numbers are not converted.')}>
       <SelectRow
         icon="globe" iconTint="var(--blue)" title={t('Language')}
-        value={S.lang || 'en'} onChange={v => update(s => { s.lang = v })}
+        value={S.lang || 'es'} onChange={v => update(s => { s.lang = v })}
         options={Object.entries(PRIMARY_LANGS).map(([k, name]) => ({
           value: k, label: name,
           subtitle: INSTR_LANGS.includes(k) ? null : t("Exercise instructions aren't available in this language yet — they stay in English."),

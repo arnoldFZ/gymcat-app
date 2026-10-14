@@ -782,4 +782,5 @@ export default {
   'Your progress lives only on this device — export a backup now and then.': 'Tu progreso vive solo en este dispositivo: exporta una copia de vez en cuando.',
   'Last backup': 'Última copia',
   'Never': 'Nunca',
+  'Back up now': 'Hacer copia ahora',
 }

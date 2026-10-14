@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../store/useStore.js'
+import { useUI } from '../store/useUI.js'
 import { effectiveRoutine, effectiveRoutineId, streakWeeks, lastBW, setsDoneActive } from '../lib/history.js'
 import { fmtNum, fmtDate, todayISO, isoOf, weekKey, DAYS } from '../lib/format.js'
 import { t, dateLocale } from '../lib/i18n.js'
@@ -11,6 +12,7 @@ import { Button, Segmented } from '../components/ui.jsx'
 import { glyphOf } from '../lib/glyphs.js'
 import { dashboardStats, rulesOf } from '../lib/gamification/index.js'
 import { rewardsSheet, weekGoalSheet, programSheet } from '../gamification.jsx'
+import { downloadBackup } from '../lib/backup.js'
 
 // Home = what to do now + a quick glance. Deep charts & history live in Stats.
 export default function Home() {
@@ -18,6 +20,7 @@ export default function Home() {
   const S = useStore(s => s.S)
   const user = useStore(s => s.user)
   const update = useStore(s => s.update)
+  const toast = useUI(s => s.toast)
   const [weekOffset, setWeekOffset] = useState(0)
 
   const today = new Date()
@@ -47,6 +50,12 @@ export default function Home() {
 
   // today's session shown right under the week strip
   const onToday = () => { if (S.active) nav('/workout'); else if (routine) startFlow(routine.id); else dayOverrideSheet(todayISO()) }
+
+  // One-tap backup straight from the reminder card.
+  const backupNow = async () => {
+    const ok = await downloadBackup(S)
+    if (ok) { update(s => { s.lastBackup = Date.now() }); toast(t('Backup exported')) }
+  }
 
   // GYMPACT: weekly goal, points and streak — constancy, not volume.
   const gam = dashboardStats(S)
@@ -131,14 +140,10 @@ export default function Home() {
     </div>
 
     {needsBackup && (
-      <div className="card tappable" style={{ cursor: 'pointer' }} onClick={() => nav('/settings')}>
-        <div className="row between">
-          <div>
-            <div className="row" style={{ gap: 7 }}><Icon name="upload" style={{ color: 'var(--blue)' }} /><span>{t('Back up your data')}</span></div>
-            <div className="muted small" style={{ marginTop: 2 }}>{t('Your progress lives only on this device — export a backup now and then.')}</div>
-          </div>
-          <Icon name="chevronRight" className="chev" />
-        </div>
+      <div className="card">
+        <div className="row" style={{ gap: 7 }}><Icon name="upload" style={{ color: 'var(--blue)' }} /><span>{t('Back up your data')}</span></div>
+        <div className="muted small" style={{ margin: '4px 0 10px' }}>{t('Your progress lives only on this device — export a backup now and then.')}</div>
+        <Button variant="primary" icon="download" onClick={backupNow}>{t('Back up now')}</Button>
       </div>
     )}
 
