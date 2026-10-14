@@ -1,0 +1,9 @@
+# Cloudflare Workers/Pages reads this file and applies these headers to every response.
+# CSP tuned for the app: scripts are external (no inline), styles may be inline, exercise
+# media comes from jsdelivr, the voice uses a data: clip, and the API is same-origin.
+/*
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://cdn.jsdelivr.net; media-src 'self' data: https://cdn.jsdelivr.net; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  X-Frame-Options: DENY
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=()

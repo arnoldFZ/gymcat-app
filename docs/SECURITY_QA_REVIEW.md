@@ -234,3 +234,28 @@ escritorio, y una instancia self-host para passkeys.
 - Cliente: `frontend/src/lib/api.js`, `frontend/src/views/Login.jsx`,
   `frontend/src/views/Settings.jsx`, `frontend/src/store/useStore.js` (`boot`).
 - Despliegue: `docs/DEPLOY.md`. Datos/privacidad: `frontend/src/lib/*`, `NOTICE.md` (AGPL).
+
+---
+
+## 7. Endurecimiento aplicado (2026-10-14)
+
+- **P0 — 405:** passkeys ocultos sin backend (rama `STATIC` en Ajustes). ✅
+- **Animaciones en la web estática:** `build:web` usa ahora el **CDN** del dataset
+  (`VITE_IMG_BASE`/`VITE_GIF_BASE`), igual que la build móvil → los GIF/imágenes se ven en
+  GitHub Pages/Cloudflare (el SW no intercepta cross-origin). ✅
+- **`userVerification` → `required`** (registro y login) y `requireUserVerification: true`
+  al verificar. ✅
+- **`npm audit fix`:** de **19 → 7** avisos; los 7 restantes son de **tooling/build nativo**
+  (`@capacitor/*`, `sharp`, `tar`, `xcode`, `@trapezedev`) y **no entran en el bundle**;
+  requieren *major* (no aplicado). ✅ parcial
+- **Cabeceras de seguridad + CSP:** `frontend/public/_headers` (Cloudflare) y `nginx.conf`
+  (self-host): `Content-Security-Policy`, `X-Content-Type-Options`, `Referrer-Policy`,
+  `X-Frame-Options`, `Permissions-Policy`. ✅ (GitHub Pages **no** permite cabeceras
+  personalizadas: ahí no aplica la CSP.)
+- **Fix self-host:** `docker-compose.yml` apuntaba a `web/Dockerfile` (inexistente); ahora a
+  `Dockerfile` (raíz, que usa `web/nginx.conf`). ✅
+
+### Pendiente (P2)
+- Token CSRF / `SameSite=Strict`; SRI (no aplicable a `<img>`); upgrade mayor de Capacitor;
+  rate limiting en el proxy; E2E de passkeys en CI.
+

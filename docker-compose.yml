@@ -41,7 +41,7 @@ services:
     image: gymcat-web:latest
     build:
       context: .
-      dockerfile: web/Dockerfile
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       media:
