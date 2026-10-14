@@ -111,10 +111,10 @@ la build móvil usa el CDN).
   proxy), evitando CORS abierto. Correcto para passkeys.
 
 ### 3.4 CSRF
-- Cookie `SameSite=Lax` + cuerpo JSON. Las peticiones de cambio de estado (`POST/PUT`) desde
-  otro sitio no llevarán la cookie (Lax no la adjunta en cross-site POST). **No** hay token
-  CSRF: riesgo residual **bajo** (subdominios same-site, navegadores antiguos). Para subir el
-  listón: token CSRF o `SameSite=Strict` + `Origin` check.
+- Cookie **`SameSite=Strict`** (endurecido en §7) + cuerpo JSON: la cookie no viaja en
+  peticiones cross-site → mitigación fuerte. Además, en **producción (https)** se exige que
+  la cabecera **`Origin`** coincida con `ORIGIN` en métodos de cambio de estado. Residual:
+  navegadores antiguos; se podría añadir token CSRF, pero el riesgo ya es bajo.
 
 ### 3.5 XSS / inyección
 - **No hay** `dangerouslySetInnerHTML`, `innerHTML`, `eval` ni `new Function` en `src/`
@@ -131,9 +131,10 @@ la build móvil usa el CDN).
   Guest/static: todo en el navegador (exportable).
 
 ### 3.7 DoS / abuso
-- **Sin rate limiting** (por diseño; se delega en el proxy inverso). `readBody` limita a
-  **5 MB**. Retos con TTL. Entropía de invitación 64 bits. En exposición pública se
-  recomienda rate limit en el proxy.
+- **Rate limiting en memoria** por IP en los endpoints de autenticación (registro/login) y
+  en `PUT /api/data`/`logout-all` (§7), con `429` + `Retry-After`. `readBody` limita a
+  **5 MB**; retos con TTL; invitación 64 bits. El limitador es **por instancia** y se reinicia
+  al arrancar: para producción expuesta, añadir rate limit en el **proxy inverso**.
 
 ### 3.8 Dependencias (supply chain)
 `npm audit`: **19 avisos** — **ninguno en el bundle servido** al navegador (React/ReactDOM/
@@ -254,8 +255,13 @@ escritorio, y una instancia self-host para passkeys.
   personalizadas: ahí no aplica la CSP.)
 - **Fix self-host:** `docker-compose.yml` apuntaba a `web/Dockerfile` (inexistente); ahora a
   `Dockerfile` (raíz, que usa `web/nginx.conf`). ✅
+- **P2 — CSRF:** cookie `SameSite=Strict` + comprobación de `Origin` en producción. ✅
+- **P2 — Rate limiting:** por IP en registro/login, `PUT /api/data` y `logout/all` (429 +
+  `Retry-After`). En memoria (por instancia); complementar en el proxy. ✅
+- **P2 — CSP en GitHub Pages:** el plugin de Vite inyecta la CSP como `<meta>` en el build de
+  producción (GH Pages no admite cabeceras). ✅
 
-### Pendiente (P2)
-- Token CSRF / `SameSite=Strict`; SRI (no aplicable a `<img>`); upgrade mayor de Capacitor;
-  rate limiting en el proxy; E2E de passkeys en CI.
+### Pendiente (P2, menor)
+- Token CSRF explícito (hoy mitigado por Strict + Origin); SRI (no aplicable a `<img>`);
+  upgrade *major* de Capacitor; rate limiting a nivel de proxy; E2E de passkeys en CI.
 

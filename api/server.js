@@ -246,9 +246,9 @@ function requireAdmin(req, res) {
   return user;
 }
 function sessionCookie(user) {
-  return `gymsid=${makeSession(user)}; Path=/; Max-Age=${SESSION_DAYS * 86400}; HttpOnly;${SECURE} SameSite=Lax`;
+  return `gymsid=${makeSession(user)}; Path=/; Max-Age=${SESSION_DAYS * 86400}; HttpOnly;${SECURE} SameSite=Strict`;
 }
-const clearCookie = `gymsid=; Path=/; Max-Age=0; HttpOnly;${SECURE} SameSite=Lax`;
+const clearCookie = `gymsid=; Path=/; Max-Age=0; HttpOnly;${SECURE} SameSite=Strict`;
 
 /* ---------- challenge store (in-memory, 5 min TTL) ---------- */
 const challenges = new Map(); // cid -> {challenge, name?, uid?, exp}
@@ -288,6 +288,40 @@ function readBody(req) {
 }
 const b64uToBuf = s => Buffer.from(s, 'base64url');
 
+/* ---------- abuse protection: rate limiting + CSRF origin check ---------- */
+// No dependencies. A per-IP sliding window for the sign-in endpoints (brute-force / spam)
+// and an Origin check for state-changing requests in production. In-memory, so it is
+// per-instance and resets on restart — pair it with the reverse proxy for real protection.
+const rl = new Map(); // key -> { count, reset }
+setInterval(() => { const n = Date.now(); for (const [k, v] of rl) if (v.reset < n) rl.delete(k); }, 60000).unref();
+function rateLimit(key, max, windowMs) {
+  const now = Date.now();
+  const e = rl.get(key);
+  if (!e || e.reset < now) { rl.set(key, { count: 1, reset: now + windowMs }); return true; }
+  e.count++;
+  return e.count <= max;
+}
+function clientIp(req) {
+  const xff = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return xff || (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+// CSRF: browsers send Origin on non-GET requests. In production (https) require it to match
+// ORIGIN; in dev (http) skip, since the Vite proxy rewrites the host.
+function originOK(req) {
+  if (!SECURE) return true;
+  const o = req.headers.origin;
+  if (!o) return true; // non-browser client (curl, server-to-server)
+  try { return new URL(o).origin === new URL(ORIGIN).origin; } catch { return false; }
+}
+function guard(req, res, key, max, windowMs) {
+  if (!originOK(req)) { json(res, 403, { error: 'bad origin' }); return false; }
+  if (max && !rateLimit(key + ':' + clientIp(req), max, windowMs)) {
+    json(res, 429, { error: 'too many requests, slow down' }, { 'Retry-After': '60' });
+    return false;
+  }
+  return true;
+}
+
 /* ---------- live presence (in-memory) ---------- */
 // Clients heartbeat /api/activity while a workout is on screen; the admin dashboard reads who's
 // live. Purely ephemeral — never persisted. Expires shortly after the last ping.
@@ -315,6 +349,7 @@ const routes = {
   },
 
   'POST /api/register/options': async (req, res) => {
+    if (!guard(req, res, 'reg', 20, 60000)) return;
     const body = await readBody(req);
     const name = String(body.name || '').trim().slice(0, 40);
     if (!name) return json(res, 400, { error: 'name required' });
@@ -334,6 +369,7 @@ const routes = {
   },
 
   'POST /api/register/verify': async (req, res) => {
+    if (!guard(req, res, 'reg', 40, 60000)) return;
     const body = await readBody(req);
     const c = takeChallenge(body.cid);
     if (!c || !c.uid) return json(res, 400, { error: 'challenge expired — try again' });
@@ -370,6 +406,7 @@ const routes = {
   },
 
   'POST /api/login/options': async (req, res) => {
+    if (!guard(req, res, 'login', 40, 60000)) return;
     const options = await generateAuthenticationOptions({
       rpID: RP_ID, userVerification: 'required', allowCredentials: []
     });
@@ -378,6 +415,7 @@ const routes = {
   },
 
   'POST /api/login/verify': async (req, res) => {
+    if (!guard(req, res, 'login', 60, 60000)) return;
     const body = await readBody(req);
     const c = takeChallenge(body.cid);
     if (!c) return json(res, 400, { error: 'challenge expired — try again' });
@@ -415,6 +453,7 @@ const routes = {
   // The caller's own cookie is cleared here too, so the browser doing it doesn't sit on a token
   // it no longer accepts. Passkeys are untouched: signing back in works immediately.
   'POST /api/logout/all': async (req, res) => {
+    if (!guard(req, res, 'sess', 60, 60000)) return;
     const user = readSession(req);
     if (!user) return json(res, 401, { error: 'not signed in' });
     user.sv = sessionVersion(user) + 1;
@@ -432,6 +471,7 @@ const routes = {
   },
 
   'PUT /api/data': async (req, res) => {
+    if (!guard(req, res, 'data', 600, 60000)) return;
     const user = readSession(req);
     if (!user) return json(res, 401, { error: 'not signed in' });
     const body = await readBody(req);
