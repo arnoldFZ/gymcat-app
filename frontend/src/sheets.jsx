@@ -64,6 +64,33 @@ export function confirmSheet(opts) {
   ui().openSheet(close => <ConfirmDialog {...opts} close={close} />, { kind: 'center' })
 }
 
+/* ============================ install as app ============================ */
+// iOS has no install API, so the best a page can do is tell the user the exact taps.
+export const installHelpSheet = () => ui().openSheet(close => <InstallHelp close={close} />, { kind: 'center' })
+
+function InstallHelp({ close }) {
+  const ua = (typeof navigator !== 'undefined' && navigator.userAgent) || ''
+  const ios = /iPad|iPhone|iPod/.test(ua) || (typeof navigator !== 'undefined' && navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1)
+  return <>
+    <h3>{t('Install as an app')}</h3>
+    <div className="muted small" style={{ marginBottom: 12 }}>{t('Add GymCat to your home screen for a full-screen, app-like experience.')}</div>
+    <ol className="steps-list">
+      {ios ? <>
+        <li>{t('Open this page in Safari.')}</li>
+        <li>{t('Tap the Share button (the square with an arrow).')}</li>
+        <li>{t('Choose “Add to Home Screen”, then Add.')}</li>
+      </> : <>
+        <li>{t('Open the browser menu (⋮).')}</li>
+        <li>{t('Choose “Install app” or “Add to Home screen”.')}</li>
+        <li>{t('Confirm.')}</li>
+      </>}
+    </ol>
+    {ios && <div className="dim small" style={{ marginTop: 8 }}>{t('iPhone doesn’t let a page install itself — iOS only allows it from Safari’s Share menu.')}</div>}
+    <div style={{ height: 12 }} />
+    <Button variant="ghost" className="dim" onClick={close}>{t('Close')}</Button>
+  </>
+}
+
 /* ============================ suggested plans ============================ */
 // Picker for the ready-made training templates (lib/plans.js). Loading a plan adds
 // its routines and sets the week schedule; the user's existing routines are kept.

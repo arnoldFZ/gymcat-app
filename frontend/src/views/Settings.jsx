@@ -10,7 +10,8 @@ import { wakeLockSupported } from '../lib/wakelock.js'
 import { t, PRIMARY_LANGS, INSTR_LANGS } from '../lib/i18n.js'
 import { DEMO, REPO } from '../lib/demo.js'
 import { MOBILE, shareExport, syncReminder } from '../lib/mobile.js'
-import { plansSheet, confirmSheet, importFromApp } from '../sheets.jsx'
+import { plansSheet, confirmSheet, importFromApp, installHelpSheet } from '../sheets.jsx'
+import { isStandalone, canPrompt, promptInstall, useInstall } from '../lib/install.js'
 import { rewardsSheet, rulesSheet, ledgerSheet } from '../gamification.jsx'
 import { rulesOf } from '../lib/gamification/index.js'
 import { isSpeechSupported, speakTest, voiceCount, listVoices, speechLangs, isIOS } from '../lib/speech.js'
@@ -26,6 +27,7 @@ export default function Settings() {
   const fileRef = useRef(null)
   const importRef = useRef(null)
   const wakeOK = wakeLockSupported()
+  useInstall()   // re-render when the install prompt becomes available
 
   const doExport = async () => {
     const json = JSON.stringify(S, null, 2)
@@ -128,6 +130,14 @@ export default function Settings() {
       <Row icon="bell" iconTint="var(--orange)" title={t('Weekly nudge')} subtitle={t('Remind me when one session is left to hit the goal.')}>
         <Switch checked={S.gamNudge !== false} onChange={v => update(s => { s.gamNudge = v })} />
       </Row>
+    </Section>
+
+    {/* ---------- app / install ---------- */}
+    <Section title={t('App')}>
+      {isStandalone()
+        ? <Row icon="checkCircle" iconTint="var(--acc)" title={t('Installed as an app')} subtitle={t('You’re running the full-screen app.')} />
+        : <Row icon="download" iconTint="var(--acc)" title={t('Install as an app')} subtitle={t('Full screen, offline, on your home screen.')} accessory="chevron"
+            onClick={async () => { if (canPrompt()) { const ok = await promptInstall(); if (!ok) installHelpSheet() } else installHelpSheet() }} />}
     </Section>
 
     {/* ---------- during a workout ---------- */}

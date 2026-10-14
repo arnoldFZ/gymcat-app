@@ -164,8 +164,18 @@ VITE_GIF_BASE=https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@7455efae
 npm run dev
 ```
 
-## Your data
-Lives in `./data` on your host: `db.json` (profiles + public passkeys), `state-<user>.json`
+## Install as an app (PWA)
+
+GymCat installs like an app. Open **Settings → App → Install as an app**:
+- **Android / desktop Chrome** — one tap (the browser install prompt).
+- **iPhone** — the button shows the exact taps: **Safari → Share → Add to Home Screen**
+  (iOS doesn't let a page install itself; that's an Apple rule, not a GymCat limit).
+
+A real install (offline, no Safari chrome, no dependence on the dev server) needs the app
+served over **HTTPS** — self-host with a domain (see [docs/SELF_HOSTING.md](docs/SELF_HOSTING.md))
+or a tunnel. Over plain `http://` on the LAN it still works as a full-screen shortcut.
+
+## Your dataLives in `./data` on your host: `db.json` (profiles + public passkeys), `state-<user>.json`
 (each user's plan, workouts, body weight, settings), and `secret` (the session-cookie key).
 **Back up `./data` and you've backed up everything.** Passkey private keys never touch the
 server — they stay in your phone's secure hardware / your password manager.
