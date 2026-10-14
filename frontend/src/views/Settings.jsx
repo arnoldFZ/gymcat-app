@@ -8,7 +8,7 @@ import { api, webauthnOK, passkeyLogin, passkeyRegister, IS_ANDROID } from '../l
 import { pushSupported, enablePush, disablePush, sendTestPush } from '../lib/push.js'
 import { wakeLockSupported } from '../lib/wakelock.js'
 import { t, PRIMARY_LANGS, INSTR_LANGS } from '../lib/i18n.js'
-import { DEMO, REPO } from '../lib/demo.js'
+import { DEMO, STATIC, REPO } from '../lib/demo.js'
 import { MOBILE, syncReminder } from '../lib/mobile.js'
 import { downloadBackup } from '../lib/backup.js'
 import { plansSheet, confirmSheet, importFromApp, installHelpSheet } from '../sheets.jsx'
@@ -71,10 +71,14 @@ export default function Settings() {
       <div style={{ flex: 1, marginLeft: 10 }}><h1>{t('Settings')}</h1></div>
     </div>
 
-    {/* ---------- account (demo and mobile builds have nothing to sign in to) ---------- */}
-    <Section title={MOBILE ? t('Your data') : DEMO ? t('Demo') : t('Account')}>
+    {/* ---------- account (demo, mobile and static builds have nothing to sign in to) ---------- */}
+    <Section title={MOBILE ? t('Your data') : (DEMO || STATIC) ? t('Local data') : t('Account')}>
       {MOBILE ? <>
         <Row icon="lock" iconTint="var(--acc)" title={t('All data stays on this phone')} subtitle={t('No account, no cloud — back it up anytime with Export below.')} />
+        <Row icon="rocket" iconTint="var(--indigo)" title={t('Self-host GymCat')} subtitle={t('Passkey sign-in, sync across your devices, your own data.')} accessory="chevron"
+          onClick={() => window.open(REPO, '_blank', 'noopener')} />
+      </> : STATIC ? <>
+        <Row icon="lock" iconTint="var(--acc)" title={t('Local profile')} subtitle={t('No account — your data is stored only in this browser. Back it up with Export below.')} />
         <Row icon="rocket" iconTint="var(--indigo)" title={t('Self-host GymCat')} subtitle={t('Passkey sign-in, sync across your devices, your own data.')} accessory="chevron"
           onClick={() => window.open(REPO, '_blank', 'noopener')} />
       </> : DEMO ? <>
@@ -95,7 +99,7 @@ export default function Settings() {
         <Row icon="lock" iconTint="var(--grey)" title={t('Passkeys not supported in this browser.')} />
       )}
     </Section>
-    {!user && !DEMO && !MOBILE && <p className="sect-f" style={{ marginTop: -18, marginBottom: 22 }}>{t('Guest mode — data lives only in this browser.')}</p>}
+    {!user && !DEMO && !MOBILE && !STATIC && <p className="sect-f" style={{ marginTop: -18, marginBottom: 22 }}>{t('Guest mode — data lives only in this browser.')}</p>}
 
     {/* ---------- general ---------- */}
     <Section title={t('General')} footer={t('Note: switching units only changes the label — logged numbers are not converted.')}>

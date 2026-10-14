@@ -783,4 +783,7 @@ export default {
   'Last backup': 'Última copia',
   'Never': 'Nunca',
   'Back up now': 'Hacer copia ahora',
+  'Local data': 'Datos locales',
+  'Local profile': 'Perfil local',
+  'No account — your data is stored only in this browser. Back it up with Export below.': 'Sin cuenta: tus datos se guardan solo en este navegador. Haz copias con Exportar aquí abajo.',
 }
