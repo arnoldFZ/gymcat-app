@@ -1,15 +1,15 @@
-# Desplegar GymCat como web (GitHub Pages o Cloudflare Pages)
+# Desplegar GymCat como web (GitHub Pages o Cloudflare)
 
 Servir la app como **sitio estático HTTPS** te da la **PWA real** (offline, instalable,
 almacenamiento persistente) **sin depender de ningún Mac encendido**.
 
-En este modo la app funciona **solo en local** (invitado, `VITE_STATIC=1`): sin backend, así
-que **no hay sync entre dispositivos** — los datos viven en el navegador de cada uno. Para
-sync/passkeys haría falta el backend (`docs/SELF_HOSTING.md`).
+Funciona en **modo local** (invitado, `VITE_STATIC=1`): sin backend, así que **no hay sync
+entre dispositivos** — los datos viven en el navegador de cada uno. Para sync/passkeys
+haría falta el backend (`docs/SELF_HOSTING.md`).
 
-El repo ya trae **dos workflows**:
+El repo trae **dos workflows**:
 - `.github/workflows/pages.yml` → **GitHub Pages** automático (sin secretos). **Recomendado.**
-- `.github/workflows/deploy.yml` → **Cloudflare Pages** manual (necesita secretos).
+- `.github/workflows/deploy.yml` → **Cloudflare** manual (necesita secretos).
 
 ---
 
@@ -17,10 +17,9 @@ El repo ya trae **dos workflows**:
 
 ```bash
 cd /Users/arnold/Desktop/opencode/gym
-gh repo create gymcat --public --source=. --remote=origin --push
+gh repo create gymcat-app --public --source=. --remote=origin --push
 ```
-
-(O manualmente: crea el repo vacío y `git remote add origin … && git push -u origin main`.)
+(Manual: crea el repo vacío y `git remote add origin … && git push -u origin main`.)
 > Necesita repo **público** para Pages gratis. AGPL-3.0-or-later: publicar mantiene la
 > fuente disponible; `NOTICE.md` conserva la atribución original.
 
@@ -28,30 +27,34 @@ gh repo create gymcat --public --source=. --remote=origin --push
 
 ## Opción A — GitHub Pages (automático, sin secretos)
 
-1. Activa Pages una vez (build type = *workflow*):
-   ```bash
-   gh api -X POST repos/<owner>/gymcat/pages -f build_type=workflow
-   ```
-2. Cada `push` a `main` compila, testea y publica. La URL queda:
-   **https://<owner>.github.io/gymcat/**
-3. Estado del despliegue: `gh run list` o la pestaña **Actions**.
+Activa Pages una vez y cada push construye, testea y publica:
 
-## Opción B — Cloudflare Pages (dashboard, sin secretos)
+```bash
+gh api -X POST repos/<owner>/gymcat-app/pages -f build_type=workflow
+```
 
-1. Cloudflare → **Workers & Pages → Create → Pages → Connect to Git** → eliges el repo.
-2. Build:
-   - **Root directory:** `frontend`
-   - **Build command:** `npm ci && npm run build:web`
-   - **Build output directory:** `dist`
-3. Deploy → `https://<proyecto>.pages.dev`. Añade un **dominio propio** en *Custom domains*.
+URL: **https://<owner>.github.io/gymcat-app/**
 
-## Opción C — Cloudflare Pages (GitHub Actions, manual)
+## Opción B — Cloudflare (Workers static assets)
 
-1. Crea el proyecto en Cloudflare Pages una vez.
-2. GitHub → **Settings → Secrets and variables → Actions**:
-   - `CLOUDFLARE_API_TOKEN` (permiso **Cloudflare Pages: Edit**)
-   - `CLOUDFLARE_ACCOUNT_ID`
-3. **Actions → "Deploy to Cloudflare Pages (manual)" → Run workflow**.
+La app se publica como **Worker con assets estáticos** (`frontend/wrangler.jsonc`).
+
+**Local (con tu sesión de Wrangler):**
+```bash
+cd frontend
+npm run build:web
+npm run deploy            # = CI=true npx wrangler@4 deploy
+```
+`wrangler login` una vez si no tienes sesión. URL: **https://gymcat.<tu-subdominio>.workers.dev**.
+
+**Desde GitHub Actions (manual):** *Actions → "Deploy to Cloudflare (manual)" → Run workflow*.
+Necesita los secrets `CLOUDFLARE_API_TOKEN` (permiso *Workers/Pages: Edit*) y
+`CLOUDFLARE_ACCOUNT_ID`.
+
+> ¿Dominio propio? En Cloudflare → el Worker → **Settings → Domains & Routes → Add custom domain**.
+
+> Alternativa clásica (Cloudflare **Pages** por Git): *Workers & Pages → Create → Pages →
+> Connect to Git*, Root directory `frontend`, build `npm ci && npm run build:web`, output `dist`.
 
 ---
 
@@ -71,4 +74,7 @@ gh repo create gymcat --public --source=. --remote=origin --push
 - **Actualizaciones:** al hacer push se reconstruye; el service worker trae lo nuevo en la
   siguiente apertura.
 - **Rutas:** la app usa `HashRouter` y `base: './'`, así que funciona igual en la raíz o en
-  un subpath (`/gymcat/`) **sin** rewrites de SPA.
+  un subpath (`/gymcat-app/`) **sin** rewrites de SPA.
+- **Git:** si `git` falla por la licencia de Xcode, usa
+  `DEVELOPER_DIR=/Library/Developer/CommandLineTools git …` o acepta la licencia
+  (`sudo xcodebuild -license accept`).

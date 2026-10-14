@@ -8,10 +8,12 @@
     "build": "vite build",
     "build:web": "VITE_STATIC=1 vite build",
     "build:mobile": "VITE_MOBILE=1 VITE_IMG_BASE=https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@7455efae41b330c265e7cd4b78dfa848e7ce5ebd/images/ VITE_GIF_BASE=https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@7455efae41b330c265e7cd4b78dfa848e7ce5ebd/videos/ vite build && cap sync",
-    "preview": "vite preview",
+    "preview": "npm run build && wrangler dev",
     "test": "vitest run",
     "test:watch": "vitest",
-    "media": "cd ../media && python3 -m http.server 8888 --bind 0.0.0.0"
+    "media": "cd ../media && python3 -m http.server 8888 --bind 0.0.0.0",
+    "deploy": "CI=true npx --yes wrangler@4 deploy",
+    "deploy": "npm run build && wrangler deploy"
   },
   "license": "AGPL-3.0-or-later",
   "dependencies": {
@@ -29,8 +31,10 @@
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^7.6.8",
     "@capacitor/ios": "^7.6.8",
+    "@cloudflare/vite-plugin": "^1.63.2",
     "@vitejs/plugin-react": "^6.0.3",
     "vite": "^8.1.5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.150.0"
   }
 }

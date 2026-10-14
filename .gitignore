@@ -7,6 +7,10 @@ api/node_modules/
 frontend/dist/
 dist/
 
+# Wrangler / Cloudflare local state
+.wrangler/
+frontend/.wrangler/
+
 # Local data & secrets — never commit (users, passkeys, session secret, vapid keys)
 data/
 *.local
