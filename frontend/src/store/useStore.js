@@ -32,7 +32,10 @@ export const DEF = {
   // Announce the last seconds of the rest timer aloud (off by default).
   speakRest: false,
   // Nudge (toast + system notification) when one session is left to hit the week.
-  gamNudge: true
+  gamNudge: true,
+  // When the user last exported a backup (ms) — drives the "back it up" reminder, since
+  // without a server the data only lives on this device.
+  lastBackup: null
 }
 const clone = o => JSON.parse(JSON.stringify(o))
 

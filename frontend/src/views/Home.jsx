@@ -51,6 +51,9 @@ export default function Home() {
   // GYMPACT: weekly goal, points and streak — constancy, not volume.
   const gam = dashboardStats(S)
   const goalPct = Math.min(100, Math.round((gam.sessions / Math.max(1, gam.target)) * 100))
+  // No server → the data lives only on this device. Remind about backups when there is
+  // something to lose and none was taken recently.
+  const needsBackup = S.workouts.length > 0 && (!S.lastBackup || Date.now() - S.lastBackup > 14 * 86400000)
 
   return <div className="narrow">
     <div className="hdr">
@@ -126,6 +129,18 @@ export default function Home() {
           ? <><div style={{ height: 14 }} /><Button variant="primary" icon="dumbbell" onClick={onToday}>{t('Start workout')}</Button></>
           : null}
     </div>
+
+    {needsBackup && (
+      <div className="card tappable" style={{ cursor: 'pointer' }} onClick={() => nav('/settings')}>
+        <div className="row between">
+          <div>
+            <div className="row" style={{ gap: 7 }}><Icon name="upload" style={{ color: 'var(--blue)' }} /><span>{t('Back up your data')}</span></div>
+            <div className="muted small" style={{ marginTop: 2 }}>{t('Your progress lives only on this device — export a backup now and then.')}</div>
+          </div>
+          <Icon name="chevronRight" className="chev" />
+        </div>
+      </div>
+    )}
 
     <div className="card">
       <div className="row between" style={{ marginBottom: 8 }}>

@@ -70,7 +70,13 @@ Necesita los secrets `CLOUDFLARE_API_TOKEN` (permiso *Workers/Pages: Edit*) y
 ## Notas
 
 - **Datos por dispositivo.** Sin backend, lo del iPhone no aparece en el portátil; muévelo
-  con **Ajustes → Backup** (exportar/importar).
+  con **Ajustes → Backup** (exportar/importar). La app recuerda **cuándo fue la última
+  copia** (Ajustes → *Data* → *Last backup*) y el dashboard avisa si hace mucho.
+- **¿Se borran solos?** En **Safari sin instalar**, iOS puede purgar el almacenamiento tras
+  **7 días sin abrir la web** (ITP). Una **app añadida a la pantalla de inicio queda exenta**
+  de ese tope y conserva los datos; aun así haz copias: sin servidor, los datos viven solo
+  en ese dispositivo. La app pide además *almacenamiento persistente* donde el navegador lo
+  soporte (`navigator.storage.persist`).
 - **Actualizaciones:** al hacer push se reconstruye; el service worker trae lo nuevo en la
   siguiente apertura.
 - **Rutas:** la app usa `HashRouter` y `base: './'`, así que funciona igual en la raíz o en

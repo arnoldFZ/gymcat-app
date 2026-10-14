@@ -6,6 +6,7 @@ import { bindUI } from './components/ui.jsx'
 import { ACCENTS } from './lib/format.js'
 import { setLang, ensureLang, useLang, t } from './lib/i18n.js'
 import { onSpeechError } from './lib/speech.js'
+import { requestPersistence } from './lib/storage.js'
 import { setNav } from './lib/nav.js'
 import { useWakeLock } from './lib/wakelock.js'
 import { startFlow } from './sheets.jsx'
@@ -103,6 +104,8 @@ function Shell() {
 export default function App() {
   const boot = useStore(s => s.boot)
   useEffect(() => { boot() }, [boot])
+  // Best-effort: ask the browser to keep our data (helps against eviction).
+  useEffect(() => { requestPersistence() }, [])
   // Surface a speech failure instead of staying silent (Chrome reports e.g.
   // 'not-allowed' when the site/tab is muted or audio is blocked).
   useEffect(() => {

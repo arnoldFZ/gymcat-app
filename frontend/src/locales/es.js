@@ -778,4 +778,8 @@ export default {
   'Choose “Install app” or “Add to Home screen”.': 'Elige «Instalar aplicación» o «Añadir a pantalla de inicio».',
   'Confirm.': 'Confirma.',
   'iPhone doesn’t let a page install itself — iOS only allows it from Safari’s Share menu.': 'El iPhone no permite que una página se instale sola: iOS solo lo permite desde el menú Compartir de Safari.',
+  'Back up your data': 'Haz una copia de tus datos',
+  'Your progress lives only on this device — export a backup now and then.': 'Tu progreso vive solo en este dispositivo: exporta una copia de vez en cuando.',
+  'Last backup': 'Última copia',
+  'Never': 'Nunca',
 }
