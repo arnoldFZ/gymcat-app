@@ -499,6 +499,9 @@ h4.sec{
 /* sitting in a list row: shrink to content instead of filling the row */
 .seg-inline{flex:none;min-width:132px}
 .seg-range{margin-bottom:10px}
+/* The range/metric control often carries longer labels — give them a touch more room so
+   they fit inside their cell instead of being clipped. */
+.seg-range button{font-size:13px;padding-left:6px;padding-right:6px}
 .seg-inline button{padding:5px 10px;font-size:13px;min-height:28px}
 .seg-inline button .icn{font-size:14px}
 
