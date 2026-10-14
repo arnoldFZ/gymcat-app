@@ -250,6 +250,26 @@ function sessionCookie(user) {
 }
 const clearCookie = `gymsid=; Path=/; Max-Age=0; HttpOnly;${SECURE} SameSite=Strict`;
 
+// Double-submit CSRF token: a NON-HttpOnly cookie the app echoes back in the
+// X-CSRF-Token header on state-changing requests. SameSite=Strict already blocks
+// cross-site cookie sending; this is defence in depth (a cross-site attacker can neither
+// read the cookie nor set the header).
+function csrfCookie(token) {
+  return `csrf=${token}; Path=/; Max-Age=${SESSION_DAYS * 86400};${SECURE} SameSite=Strict`;
+}
+const clearCsrfCookie = `csrf=; Path=/; Max-Age=0;${SECURE} SameSite=Strict`;
+function cookiesOf(req) {
+  return Object.fromEntries((req.headers.cookie || '').split(';').map(c => {
+    const i = c.indexOf('='); return i < 0 ? ['', ''] : [c.slice(0, i).trim(), c.slice(i + 1).trim()];
+  }));
+}
+function csrfOK(req) {
+  const tok = cookiesOf(req).csrf;
+  if (!tok) return true; // nothing issued yet (pre-login) → Origin + SameSite cover it
+  const hdr = String(req.headers['x-csrf-token'] || '');
+  return !!hdr && hdr === tok;
+}
+
 /* ---------- challenge store (in-memory, 5 min TTL) ---------- */
 const challenges = new Map(); // cid -> {challenge, name?, uid?, exp}
 function putChallenge(data) {
@@ -314,7 +334,7 @@ function originOK(req) {
   try { return new URL(o).origin === new URL(ORIGIN).origin; } catch { return false; }
 }
 function guard(req, res, key, max, windowMs) {
-  if (!originOK(req)) { json(res, 403, { error: 'bad origin' }); return false; }
+  if (!originOK(req) || !csrfOK(req)) { json(res, 403, { error: 'bad origin' }); return false; }
   if (max && !rateLimit(key + ':' + clientIp(req), max, windowMs)) {
     json(res, 429, { error: 'too many requests, slow down' }, { 'Retry-After': '60' });
     return false;
@@ -402,7 +422,7 @@ const routes = {
       transports: body.credential?.response?.transports || []
     });
     saveDb();
-    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': sessionCookie(user) });
+    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': [sessionCookie(user), csrfCookie(crypto.randomBytes(16).toString('base64url'))] });
   },
 
   'POST /api/login/options': async (req, res) => {
@@ -443,10 +463,10 @@ const routes = {
     const user = db.users.find(u => u.id === cred.userId);
     if (!user) return json(res, 500, { error: 'user missing' });
     if (user.disabled) return json(res, 403, { error: 'this account has been disabled' });
-    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': sessionCookie(user) });
+    json(res, 200, { user: { id: user.id, name: user.name, admin: isAdmin(user) } }, { 'Set-Cookie': [sessionCookie(user), csrfCookie(crypto.randomBytes(16).toString('base64url'))] });
   },
 
-  'POST /api/logout': async (req, res) => json(res, 200, { ok: true }, { 'Set-Cookie': clearCookie }),
+  'POST /api/logout': async (req, res) => json(res, 200, { ok: true }, { 'Set-Cookie': [clearCookie, clearCsrfCookie] }),
 
   // "Sign out everywhere" — bumps this user's session version, which invalidates every cookie
   // ever issued for the account, on every device, including a copy someone else walked off with.
@@ -458,7 +478,7 @@ const routes = {
     if (!user) return json(res, 401, { error: 'not signed in' });
     user.sv = sessionVersion(user) + 1;
     saveDb();
-    json(res, 200, { ok: true }, { 'Set-Cookie': clearCookie });
+    json(res, 200, { ok: true }, { 'Set-Cookie': [clearCookie, clearCsrfCookie] });
   },
 
   'GET /api/data': async (req, res) => {

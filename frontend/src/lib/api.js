@@ -6,7 +6,14 @@ export const VAULT = IS_APPLE ? 'iCloud Keychain' : IS_ANDROID ? 'Google Passwor
 export const webauthnOK = () => !!(window.PublicKeyCredential && navigator.credentials)
 
 export async function api(path, opts) {
-  const r = await fetch(path, Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts))
+  const o = Object.assign({ headers: { 'Content-Type': 'application/json' } }, opts)
+  // Echo the double-submit CSRF token back on state-changing requests.
+  const method = String(o.method || 'GET').toUpperCase()
+  if (method !== 'GET' && method !== 'HEAD' && typeof document !== 'undefined') {
+    const m = /(?:^|;\s*)csrf=([^;]+)/.exec(document.cookie || '')
+    if (m) o.headers['X-CSRF-Token'] = decodeURIComponent(m[1])
+  }
+  const r = await fetch(path, o)
   const data = await r.json().catch(() => ({}))
   if (!r.ok) { const e = new Error(data.error || ('HTTP ' + r.status)); e.status = r.status; throw e }
   return data

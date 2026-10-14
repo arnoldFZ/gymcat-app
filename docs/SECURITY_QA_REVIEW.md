@@ -255,13 +255,18 @@ escritorio, y una instancia self-host para passkeys.
   personalizadas: ahí no aplica la CSP.)
 - **Fix self-host:** `docker-compose.yml` apuntaba a `web/Dockerfile` (inexistente); ahora a
   `Dockerfile` (raíz, que usa `web/nginx.conf`). ✅
-- **P2 — CSRF:** cookie `SameSite=Strict` + comprobación de `Origin` en producción. ✅
+- **P2 — CSRF:** cookie `SameSite=Strict` + comprobación de `Origin` en producción + **token
+  double-submit** (`csrf` cookie no-HttpOnly + cabecera `X-CSRF-Token`) en peticiones de
+  cambio de estado. ✅
 - **P2 — Rate limiting:** por IP en registro/login, `PUT /api/data` y `logout/all` (429 +
-  `Retry-After`). En memoria (por instancia); complementar en el proxy. ✅
+  `Retry-After`), **y en el proxy** nginx (`limit_req_zone`/`limit_req`, 10 r/s, burst 30). ✅
 - **P2 — CSP en GitHub Pages:** el plugin de Vite inyecta la CSP como `<meta>` en el build de
   producción (GH Pages no admite cabeceras). ✅
 
 ### Pendiente (P2, menor)
-- Token CSRF explícito (hoy mitigado por Strict + Origin); SRI (no aplicable a `<img>`);
-  upgrade *major* de Capacitor; rate limiting a nivel de proxy; E2E de passkeys en CI.
+- **Capacitor *major*:** no actualizado a propósito — los avisos nativos (`tar`, `sharp`,
+  `xcode`) **no entran en el bundle web**, y validar el upgrade exige **Xcode/CocoaPods**
+  (no disponibles aquí). Hacerlo al retomar builds nativos.
+- **SRI:** no aplicable a `<img>`; no usamos scripts de terceros.
+- **E2E de passkeys** en CI (requiere autenticador virtual).
 
