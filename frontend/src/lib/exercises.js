@@ -1,9 +1,22 @@
 import { EXDB } from './exercises-data.js'
-import { t } from './i18n.js'
+import { t, getLang, onLang } from './i18n.js'
+import { translateExName } from './exnames-es.js'
 
 export { EXDB }
 export const EXIDX = {}
 EXDB.forEach(e => { EXIDX[e.id] = e })
+
+// Built-in exercise names are English-only in the dataset. When the UI is Spanish we
+// rewrite `n` to a rule-based Spanish translation, keeping the English original in `n_en`
+// (so search can match both). Custom exercises (user-named) are left untouched.
+export function applyBuiltInNames(lang) {
+  for (const e of EXDB) {
+    if (e.n_en == null) e.n_en = e.n
+    e.n = lang === 'es' ? translateExName(e.n_en) : e.n_en
+  }
+}
+onLang(applyBuiltInNames)
+applyBuiltInNames(getLang())
 export const BODYPARTS = [...new Set(EXDB.map(e => e.bp))].sort()
 
 // Equipment options present in a given list of exercises, most common first (issue #6).

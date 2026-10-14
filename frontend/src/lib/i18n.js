@@ -33,6 +33,12 @@ let version = 0
 const subs = new Set()
 const notify = () => { version++; subs.forEach(f => f()) }
 
+// Non-React modules can react to a language change (e.g. rewrite the exercise catalogue
+// names). Called BEFORE notify() so the re-render already sees the updated values.
+const langHooks = new Set()
+export const onLang = fn => { langHooks.add(fn); return () => langHooks.delete(fn) }
+const runLangHooks = () => { for (const f of langHooks) { try { f(lang) } catch { /* */ } } }
+
 export const getLang = () => lang
 export const isLangReady = l => (l || 'es') === lang && loaded
 export const dateLocale = () => DATE_LOCALES[lang] || 'en-GB'
@@ -78,6 +84,7 @@ export async function setLang(l, attempt = 0) {
   }
   dict = d
   loaded = true
+  runLangHooks()
   notify()
   instr = null
   if (l !== 'en' && INSTR_LANGS.includes(l)) {
