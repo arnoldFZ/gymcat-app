@@ -491,6 +491,9 @@ h4.sec{
   justify-content:center;gap:5px;min-height:30px;transition:opacity var(--fast);
 }
 .seg button .icn{font-size:16px}
+/* The label sits in a <span>; let it shrink and ellipsise so a long label (e.g. the
+   Spanish "Mejor serie") can never overflow its cell and overlap the neighbour. */
+.seg button>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .seg button:not(.on){color:var(--label-2);font-weight:400}
 .seg button:active{opacity:.5}
 /* sitting in a list row: shrink to content instead of filling the row */
