@@ -1,13 +1,12 @@
 # Builds the static web app (no backend) and deploys it to Cloudflare Pages.
+# Manual only (workflow_dispatch) so a push never fails while the secrets are absent.
 # Needs two repository secrets: CLOUDFLARE_API_TOKEN (Pages:Edit) and CLOUDFLARE_ACCOUNT_ID.
-# Prefer no secrets? Skip this file and connect the repo in the Cloudflare Pages dashboard
-# instead — see docs/DEPLOY.md. HashRouter means no SPA rewrites are required.
+# Prefer no secrets at all? Use the GitHub Pages workflow instead, or connect the repo in
+# the Cloudflare Pages dashboard — see docs/DEPLOY.md.
 
-name: Deploy to Cloudflare Pages
+name: Deploy to Cloudflare Pages (manual)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
